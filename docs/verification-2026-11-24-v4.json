@@ -1,0 +1,108 @@
+{
+  "recordedAt": "2026-11-24T15:43:35.618919+00:00",
+  "release": "20261124-coop-v4",
+  "url": "https://game.winlife.fun/mario/",
+  "host": "123.57.84.170",
+  "service": "mario-web.service",
+  "node": "v24.22.2",
+  "archiveSha256": "b98d5c626c9746dd2caede7a4f750fe0e6893e6ab55f3e583c65787e9e985b1f",
+  "build": {
+    "files": 125,
+    "mebibytes": 10.34,
+    "localDependencies": true
+  },
+  "tests": {
+    "passed": 20,
+    "failed": 0,
+    "suites": [
+      "world physics and shared mutations",
+      "first-world map anchors and campaign transitions",
+      "Koopa and shells, hidden rewards, moving platforms, Bowser and axe",
+      "WebSocket capacity, readiness, state consistency, origin rejection, reconnection and input sequence reset",
+      "public/private lobby, quick join, solo and multi-client map revision",
+      "four normal-spawn input replays"
+    ]
+  },
+  "publicWebSockets": {
+    "clients": 4,
+    "wss": true,
+    "sharedMap": true,
+    "sharedState": true,
+    "inputMovement": true,
+    "fifthClientRejected": true,
+    "reconnectedWithSameIdentity": true,
+    "result": "passed"
+  },
+  "linuxRuntimeReplays": [
+    {
+      "stage": "1-1",
+      "phase": "cleared",
+      "lives": 3,
+      "score": 20050,
+      "ticks": 1542
+    },
+    {
+      "stage": "1-2",
+      "phase": "cleared",
+      "lives": 3,
+      "score": 21100,
+      "ticks": 1622
+    },
+    {
+      "stage": "1-3",
+      "phase": "cleared",
+      "lives": 3,
+      "score": 15750,
+      "ticks": 1182
+    },
+    {
+      "stage": "1-4",
+      "phase": "won",
+      "lives": 3,
+      "score": 14100,
+      "ticks": 1426
+    }
+  ],
+  "browser": {
+    "nativeApp": "Microsoft Edge",
+    "observed": [
+      "desktop hall",
+      "joining a public room from its listing",
+      "four-player readiness and start",
+      "keyboard move and jump",
+      "castle layout",
+      "393x852 mobile hall and five touch controls"
+    ],
+    "note": "Core play was checked on v3. v4 adds stable unchanged lobby rows, compact P1–P4 labels and stage-specific tips; its public files were checked byte-for-byte."
+  },
+  "publicFileSha256": {
+    "index.html": "5828efbd29dd07a1ab3613c5d828bc1cfb848e2278ed3c642188504259ce8ead",
+    "javascript/multiplayer.js": "077863dae8abf4133b9c5a0be0ae6c619deef3d37b07d9f8c07cedac24ea7eac",
+    "assets/css/multiplayer.css": "e91f10b1e0afb8f7c1cb63074dc0f58e2b0d3f6618d7bd5953ed42e26c2f91e3",
+    "assets/first-world/bowser.png": "55fd534b50095aedb3ff7ae039aaf5a44cb5caada70499e6fb203a62a8c4434c",
+    "assets/first-world/koopa-red.png": "039d8515185ac70f391d5897f5becedb4911abfc4819adc992c8017be0103632"
+  },
+  "postTestHealth": {
+    "ok": true,
+    "service": "mario-coop",
+    "rooms": 0,
+    "players": 0,
+    "capacity": {
+      "maxRooms": 8,
+      "maxPlayers": 16
+    }
+  },
+  "postTestLobby": {
+    "rooms": [],
+    "online": 0,
+    "capacity": {
+      "maxRooms": 8,
+      "maxPlayers": 16
+    }
+  },
+  "otherServices": {
+    "https://game.winlife.fun/api/health": 200,
+    "https://ra.winlife.fun/healthz": 200
+  },
+  "scope": "First world 1-1 to 1-4 and associated bonus areas; 2–4 co-op plus solo. Later worlds, vine/sky routes and complete original cutscenes remain open. See SOURCE_AUDIT.md."
+}

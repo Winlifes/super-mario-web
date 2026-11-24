@@ -33,4 +33,8 @@ curl http://127.0.0.1:2678/api/health
 bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 ```
 
-完整源码基于上游提交 `6b9918d92b07d9a7ac25aa61b8878879ad1f8072`。单人保留上游随机关卡；联机新增独立的统一关卡和服务端模拟。联机合作草地不是原版1-1的逐像素还原。
+运行包必须包含 `dist/`、`server/`、`shared/`、`data/`、`node_modules/ws/`、package 文件、LICENSE 和 THIRD_PARTY_NOTICES.md。`data/first-world.json` 由服务端加载，不能遗漏。
+
+`/api/lobby` 返回公开房间摘要，不返回重连令牌或私密房间码。公开房间仅在等待且有席位时可加入；快速加入会寻找空房，找不到则创建公开房间。私密房间仍通过邀请链接/房间码加入。单人房为私密且最多1人。
+
+固定关卡数据和实现差异见 `docs/SOURCE_AUDIT.md`。服务器换关时广播新的地图版本，所有玩家使用同一阶段；奖励房允许队友分区游玩，共享金币和砖块状态。

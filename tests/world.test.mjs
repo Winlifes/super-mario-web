@@ -42,7 +42,7 @@ test('a teammate reaching the goal finishes the shared round once', () => {
   a.x=world.level.goal.x; stepWorld(world);
   const score=world.score;
   for(let i=0;i<60;i++) stepWorld(world);
-  assert.equal(world.phase,'won'); assert.equal(world.score,score);
+  assert.equal(world.phase,'cleared'); assert.equal(world.score,score);
   assert.equal(world.events.filter(event=>event.type==='win').length,1);
 });
 

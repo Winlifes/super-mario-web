@@ -1,0 +1,122 @@
+[
+  {
+    "name": "bowser",
+    "width": 32,
+    "height": 32,
+    "frames": 4
+  },
+  {
+    "name": "bowser-fire",
+    "width": 24,
+    "height": 8,
+    "frames": 1
+  },
+  {
+    "name": "piranha",
+    "width": 16,
+    "height": 24,
+    "frames": 2
+  },
+  {
+    "name": "star",
+    "width": 16,
+    "height": 14,
+    "frames": 4
+  },
+  {
+    "name": "axe",
+    "width": 16,
+    "height": 16,
+    "frames": 3
+  },
+  {
+    "name": "castle-block",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "bridge",
+    "width": 16,
+    "height": 8,
+    "frames": 1
+  },
+  {
+    "name": "platform",
+    "width": 8,
+    "height": 8,
+    "frames": 1
+  },
+  {
+    "name": "tree-left",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "tree-middle",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "tree-right",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "tree-trunk",
+    "width": 8,
+    "height": 8,
+    "frames": 1
+  },
+  {
+    "name": "lava",
+    "width": 8,
+    "height": 11,
+    "frames": 1
+  },
+  {
+    "name": "toad",
+    "width": 16,
+    "height": 26,
+    "frames": 1
+  },
+  {
+    "name": "stone-castle",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "floor-castle",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
+    "name": "koopa-winged",
+    "width": 16,
+    "height": 24,
+    "frames": 2
+  },
+  {
+    "name": "koopa-red",
+    "width": 16,
+    "height": 24,
+    "frames": 2
+  },
+  {
+    "name": "koopa-winged-red",
+    "width": 16,
+    "height": 24,
+    "frames": 2
+  },
+  {
+    "name": "shell-red",
+    "width": 16,
+    "height": 14,
+    "frames": 1
+  }
+]

@@ -25,3 +25,13 @@
 - Project: https://github.com/websockets/ws
 - Version: pinned in `package-lock.json`.
 - License: MIT; the package includes `node_modules/ws/LICENSE`.
+
+## FullScreenMario reference data and pixel assets
+
+- Project / preserved mirror: https://github.com/JFOC/FullScreenMario
+- Imported revision: dc7db1fdea151684d78425bd1152ff680c7047d6
+- Four original-level reconstructions: `Source/settings/maps/1-1.js` through `1-4.js`.
+- Palette/RLE sprite data: `Source/settings/sprites.js`; deterministic decoding in `scripts/import-first-world.mjs`.
+- Additional audio: Castle, Star, Gain Life, and Bowser Falls from `Source/Sounds/`.
+- Code/data license notice: `vendor/fullscreenmario/LICENSE.txt` (MIT).
+- Mario characters, graphics, music and trademarks remain associated with Nintendo; the repository's MIT notice does not establish a separate Nintendo asset license.
