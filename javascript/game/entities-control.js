@@ -34,7 +34,12 @@ function createGoombas() {
     this.physics.add.collider(this.goombasGroup.getChildren(), this.fallProtectionGroup.getChildren());
     this.physics.add.collider(this.goombasGroup.getChildren(), this.finalTrigger);
 
-    setInterval(clearGoombas.call(this), 250);
+    this.time.addEvent({
+        delay: 250,
+        callback: clearGoombas,
+        callbackScope: this,
+        loop: true
+    });
 }
 
 function checkGoombaCollision(player, goomba) {

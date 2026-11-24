@@ -80,7 +80,11 @@ var smoothedControls;
 var gameOver = false;
 var gameWinned = false;
 
-var game = new Phaser.Game(config);
+var game = null;
+
+function startClassicGame() {
+    if (!game) game = new Phaser.Game(config);
+}
 
 function isMobileDevice() {
     return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);

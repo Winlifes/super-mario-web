@@ -1,0 +1,27 @@
+[Unit]
+Description=Mario Web 2-4 Player Co-op
+After=network.target
+
+[Service]
+Type=simple
+User=mario-web
+Group=mario-web
+WorkingDirectory=/opt/mario-web/current
+EnvironmentFile=/etc/mario-web.env
+ExecStart=/opt/mario-web/runtime/bin/node /opt/mario-web/current/server/index.mjs
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/mario-web
+RestrictSUIDSGID=true
+MemoryMax=256M
+TasksMax=64
+LimitNOFILE=4096
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

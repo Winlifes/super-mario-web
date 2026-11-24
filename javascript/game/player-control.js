@@ -76,18 +76,22 @@ function updatePlayer(delta) {
         if (playerState == 2)
         player.anims.play('fire-mario-run', true);
 
-        if(player.x >= worldWidth - (worldWidth / 75)) {
+        if(player.x >= worldWidth - (worldWidth / 75) && !player.finishingLevel) {
+            player.finishingLevel = true;
             this.tweens.add({
                 targets: player,
                 duration: 75,
                 alpha: 0
             });
         }
-        setTimeout(() => {
-            gameWinned = true;
-            player.destroy();
-            winScreen.call(this);
-        }, 5000);
+        if (!player.winSequenceStarted) {
+            player.winSequenceStarted = true;
+            this.time.delayedCall(5000, () => {
+                gameWinned = true;
+                player.destroy();
+                winScreen.call(this);
+            });
+        }
         return;
     }
 

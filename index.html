@@ -1,33 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Mario Phaser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="description" content="经典马里奥横版网页游戏：奔跑、跳跃、顶砖块、收集道具和挑战随机关卡。">
+    <meta name="theme-color" content="#8585ff">
+    <title>马里奥网页游戏</title>
     <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <link rel="preload" href="assets/others/loading.gif" as="image" />
     <link rel="stylesheet" href="assets/css/style.css" />
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="assets/css/multiplayer.css" />
+    <script src="vendor/phaser-3.55.2.min.js"></script>
+    <script src="vendor/html2canvas-1.4.1.min.js"></script>
   </head>
   <body>
-    <div id="game">
-      <img id="gif" src="assets/others/loading.gif" alt="Loading animation" class="loading-gif">
-      <img id="gif-shadow" src="assets/others/loading.gif" alt="Loading animation shadow" class="loading-gif">
+    <div id="game" hidden>
+      <img id="gif" src="assets/others/loading.gif" alt="正在加载游戏" class="loading-gif">
+      <img id="gif-shadow" src="assets/others/loading.gif" alt="" class="loading-gif">
     </div>
+    <div id="coop-game" hidden></div>
+    <main id="lobby" class="lobby">
+      <div class="pixel-cloud cloud-a" aria-hidden="true"></div>
+      <div class="pixel-cloud cloud-b" aria-hidden="true"></div>
+      <section class="lobby-card" aria-labelledby="game-title">
+        <div class="eyebrow">SUPER MARIO · WEB</div>
+        <h1 id="game-title">马里奥 · 合作闯关</h1>
+        <p class="intro">创建房间，邀请朋友，一起跑向终点。</p>
+        <div id="entry-panel">
+          <label class="field-label" for="nickname">你的昵称</label>
+          <input id="nickname" maxlength="16" autocomplete="nickname" placeholder="给自己起个名字" value="玩家">
+          <button id="create-room" class="primary">创建合作房间 <span>2–4 人</span></button>
+          <form id="join-form" class="join-form">
+            <label class="sr-only" for="room-code">六位房间码</label>
+            <input id="room-code" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="输入 6 位房间码" required pattern="[A-Za-z2-9]{6}">
+            <button id="join-room" type="submit" class="secondary">加入房间</button>
+          </form>
+          <button id="classic-mode" class="plain">先玩单人闯关</button>
+          <p class="hint">电脑：A / D 移动，空格跳跃，Shift 奔跑，Q 发射火球。手机：使用屏幕按键。</p>
+        </div>
+        <div id="room-panel" hidden>
+          <div class="room-heading"><span>房间 <strong id="room-label"></strong></span><button id="copy-invite" class="small">复制邀请链接</button></div>
+          <ul id="players" class="players" aria-label="房间玩家"></ul>
+          <p id="room-help" class="hint">邀请朋友加入，再一起准备。</p>
+          <div class="room-actions"><button id="ready-button" class="secondary">准备</button><button id="start-button" class="primary">开始闯关</button></div>
+          <button id="leave-lobby" class="plain">离开房间</button>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </section>
+      <img class="lobby-mario" src="assets/entities/mario-grown.png" alt="" aria-hidden="true">
+      <div class="pixel-ground" aria-hidden="true"></div>
+      <footer>单人闯关 · 好友联机</footer>
+    </main>
+    <div id="game-toolbar" class="game-toolbar" hidden>
+      <div><strong id="team-score">团队分数 000000</strong><span id="team-coins">金币 0</span><span id="game-time">时间 300</span></div>
+      <div><span id="connection-state">已连接</span><button id="mute-button" class="small" aria-pressed="false">声音开</button><button id="leave-game" class="small">退出房间</button></div>
+      <p id="team-members"></p>
+    </div>
+    <div id="round-message" class="round-message" hidden><h2 id="round-title"></h2><p id="round-detail"></p><button id="again-button" class="primary" hidden>返回房间，再来一局</button></div>
+    <div id="touch-controls" class="touch-controls" hidden aria-label="触屏游戏按键">
+      <div><button data-control="left" aria-label="向左移动">◀</button><button data-control="right" aria-label="向右移动">▶</button></div>
+      <div><button data-control="fire" aria-label="发射火球">火球</button><button data-control="jump" class="jump" aria-label="跳跃">跳跃</button></div>
+    </div>
+    <button id="back-classic" class="classic-back" hidden>返回选模式</button>
 
     <noscript>
       <div class="blurbg">
         <div class="alertpopup">
-          <h2>JavaScript disabled!</h2>
+          <h2>请启用 JavaScript</h2>
           <hr>
-          <p>This website uses JavaScript to work, otherwise the game will not load.</p>
-          <p>Enable or stop blocking JavaScript and try again.</p>
+          <p>这款游戏需要 JavaScript 才能运行。</p>
+          <p>请在浏览器中启用 JavaScript 后重新加载。</p>
         </div>
       </div>
     </noscript>
 
-    <script src="./javascript/game.js" type="text/javascript"></script><script src="./javascript/game/animations.js" type="text/javascript"></script><script src="./javascript/game/blocks.js" type="text/javascript"></script><script src="./javascript/game/strucutres.js" type="text/javascript"></script><script src="./javascript/game/settings.js" type="text/javascript"></script><script src="./javascript/game/fireball.js" type="text/javascript"></script><script src="./javascript/game/player-control.js" type="text/javascript"></script><script src="./javascript/game/hud-control.js" type="text/javascript"></script><script src="./javascript/game/entities-control.js" type="text/javascript"></script><script src="./javascript/helpers/screenshot.js" type="text/javascript"></script><script src="./javascript/helpers/window-title.js" type="text/javascript"></script>
+    <script src="./javascript/game.js" type="text/javascript"></script><script src="./javascript/game/animations.js" type="text/javascript"></script><script src="./javascript/game/blocks.js" type="text/javascript"></script><script src="./javascript/game/strucutres.js" type="text/javascript"></script><script src="./javascript/game/settings.js" type="text/javascript"></script><script src="./javascript/game/fireball.js" type="text/javascript"></script><script src="./javascript/game/player-control.js" type="text/javascript"></script><script src="./javascript/game/hud-control.js" type="text/javascript"></script><script src="./javascript/game/entities-control.js" type="text/javascript"></script><script src="./javascript/helpers/screenshot.js" type="text/javascript"></script>
+    <script src="./javascript/multiplayer.js" defer></script>
   </body>
 </html>
