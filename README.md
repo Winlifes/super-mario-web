@@ -1,44 +1,32 @@
+# 马里奥网页游戏
 
-# **Super Mario Phaser**
+已部署到用户自己的阿里云 ECS：<https://game.winlife.fun/mario/>。
 
-Super Mario Phaser is a recreation of the classic Super Mario Bros game using the Phaser framework. This project aims to bring the nostalgic experience of playing the iconic platformer to modern web browsers. One exciting feature of this game is the random level generation, which ensures that each playthrough offers a unique and challenging experience.
+基于 [Super Mario Phaser](https://github.com/pablogozalvez/Super-Mario-Phaser)，保留单人随机关卡，增加服务端统一计算的 2–4 人合作闯关。
 
+## 开始游玩
 
-## **Table of Contents**
+创建房间，把邀请链接或六位房间码发给朋友。全员完成资源加载并准备后，房主开始闯关。任一队友抵达旗杆即团队通关。
 
-- [Demo](#Demo)
-- [Controls](#Controls)
-- [Contributing](#Contributing)
-- [License](#License)
+电脑使用 A/D 或方向键移动、空格跳跃、Shift 奔跑、Q 发射火球；手机使用屏幕按键。联机模式每人三条命，支持检查点复活和45秒断线重连。联机当前提供“合作草地”，尚未还原原版32关。
 
-### Demo
+## 本地开发
 
-A live demo of the game can be accessed at [https://decapapi.github.io/Super-Mario-Phaser/](https://decapapi.github.io/Super-Mario-Phaser/).
+需要 Node.js 24 LTS 或更新版本：
 
-Some screenshots of the game:
+```sh
+npm ci
+npm test
+npm run build
+npm start
+```
 
-![Level Gameplay](assets/showcase/level-gameplay.gif)
+默认打开 `http://127.0.0.1:2678/`。公网四客户端验证命令：
 
-![Level Start](assets/showcase/level-start.gif)
+```sh
+node scripts/smoke-online.mjs https://game.winlife.fun/mario/
+```
 
-![Level End](assets/showcase/level-end.gif)
+[部署和运行说明](docs/DEPLOYMENT.md) · [原版功能补齐计划](docs/ROADMAP.md) · [上游原始说明](docs/UPSTREAM_README.md)
 
-![Settings Screen](assets/showcase/settings-screen.png)
-
-### Controls
-
-Controls are fully customizable, however default controls are:
-
-**Jump:** SPACE
-
-**Move Left:** A
-
-**Move Right:** D
-
-**Crouch:** S
-
-**Fire:** Q
-
-### Contributing
-
-Contributions are welcome! If you find any issues or have suggestions for improvements, please open an issue or submit a pull request. Make sure to adhere to the existing code style and follow the established guidelines.
+房间保存在进程内存中，服务器重启后需重新建房。代码和资源说明见 [第三方声明](THIRD_PARTY_NOTICES.md)；上游MIT许可证保留于 [LICENSE](LICENSE)。

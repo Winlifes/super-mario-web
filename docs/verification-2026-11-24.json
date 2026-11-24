@@ -1,0 +1,29 @@
+{
+  "verified_at_utc": "2026-11-24T15:08:27.697950+00:00",
+  "url": "https://game.winlife.fun/mario/",
+  "host": "123.57.84.170",
+  "deployment": "20261124-coop-v2",
+  "deployed_source_commit": "20476e65eae2298cffbd4d708f95c903e267c226",
+  "service": "mario-web.service",
+  "tests": {
+    "automated_tests_passed": 7,
+    "public_websocket_clients": 4,
+    "shared_level_and_state": true,
+    "authoritative_movement": true,
+    "fifth_player_rejected": true,
+    "seat_reconnection": true,
+    "host_transfer": true,
+    "public_https_and_wss": true,
+    "desktop_coop_preview": true,
+    "mobile_emulation": "iPhone 16, 393x852, touch movement and jump verified",
+    "classic_mode_load_movement_and_jump": true,
+    "viewport_change_before_classic_start": true,
+    "existing_game_platform_health": 200,
+    "existing_ra2_health": 200
+  },
+  "limits": [
+    "Mobile preview was browser emulation, not a physical-device test.",
+    "Co-op currently contains a custom shared course, not the original 32 levels.",
+    "Server process restart does not preserve active rooms."
+  ]
+}
