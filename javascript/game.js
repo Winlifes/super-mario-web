@@ -2,13 +2,13 @@ const loadingGif = document.querySelectorAll('.loading-gif');
 
 const mobileDevice = isMobileDevice();
 
-const screenWidth = window.innerWidth;
-const screenHeight = window.innerHeight * 1.1;
+var screenWidth = window.innerWidth;
+var screenHeight = window.innerHeight * 1.1;
 
-const velocityX = screenWidth / 4.5;
-const velocityY = screenHeight / 1.15;
+var velocityX = screenWidth / 4.5;
+var velocityY = screenHeight / 1.15;
 
-const levelGravity = velocityY * 2;
+var levelGravity = velocityY * 2;
 
 var config = {
     type: Phaser.AUTO,
@@ -33,14 +33,14 @@ var config = {
     version: '0.7.3'
 };
 
-const worldWidth = screenWidth * 11;
-const platformHeight = screenHeight / 5;
+var worldWidth = screenWidth * 11;
+var platformHeight = screenHeight / 5;
 
-const startOffset = screenWidth / 2.5;
+var startOffset = screenWidth / 2.5;
 
 // Hole with is calculated dividing the world width in x holes of the same size.
 const platformPieces = 100;
-const platformPiecesWidth = (worldWidth - screenWidth) / platformPieces;
+var platformPiecesWidth = (worldWidth - screenWidth) / platformPieces;
 
 var isLevelOverworld;
 
@@ -83,7 +83,23 @@ var gameWinned = false;
 var game = null;
 
 function startClassicGame() {
-    if (!game) game = new Phaser.Game(config);
+    if (game) return;
+    // The mode selector may have been opened before rotating/resizing the device.
+    screenWidth = window.innerWidth;
+    screenHeight = window.innerHeight * 1.1;
+    velocityX = screenWidth / 4.5;
+    velocityY = screenHeight / 1.15;
+    levelGravity = velocityY * 2;
+    worldWidth = screenWidth * 11;
+    platformHeight = screenHeight / 5;
+    startOffset = screenWidth / 2.5;
+    platformPiecesWidth = (worldWidth - screenWidth) / platformPieces;
+    goombasVelocityX = screenWidth / 19;
+    mushroomsVelocityX = screenWidth / 15;
+    config.width = screenWidth;
+    config.height = screenHeight;
+    config.physics.arcade.gravity.y = levelGravity;
+    game = new Phaser.Game(config);
 }
 
 function isMobileDevice() {

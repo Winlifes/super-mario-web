@@ -1,5 +1,5 @@
 
-const goombasVelocityX = screenWidth / 19
+var goombasVelocityX = screenWidth / 19
 
 function createGoombas() {
     this.goombasGroup = this.add.group();

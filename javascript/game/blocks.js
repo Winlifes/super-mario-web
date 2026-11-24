@@ -1,5 +1,5 @@
 
-const mushroomsVelocityX = screenWidth / 15;
+var mushroomsVelocityX = screenWidth / 15;
 
 function revealHiddenBlock(player, block) {
     if (!player.body.blocked.up)
