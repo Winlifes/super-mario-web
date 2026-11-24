@@ -14,7 +14,8 @@ if curl --silent --fail http://127.0.0.1:2678/api/health >"$health_file"; then
     if(health.players>0){console.error("Active players detected; finish current games before deployment.");process.exit(1);}
   ' "$health_file"
 fi
-previous_release=$(readlink -f /opt/mario-web/current 2>/dev/null || true)
+previous_release=''
+if [ -L /opt/mario-web/current ]; then previous_release=$(readlink -f /opt/mario-web/current); fi
 ln -s "$release_path" /opt/mario-web/current.next
 mv -Tf /opt/mario-web/current.next /opt/mario-web/current
 systemctl restart mario-web.service
