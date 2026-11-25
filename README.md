@@ -1,6 +1,8 @@
 # 马里奥网页游戏
 
-已部署到用户自己的阿里云 ECS：<https://game.winlife.fun/mario/>。
+在线试玩：<https://game.winlife.fun/mario/>（阿里云 ECS）。
+
+源码仓库：[Winlifes/super-mario-web](https://github.com/Winlifes/super-mario-web)。推送和拉取请求会自动运行测试与静态构建检查。
 
 基于 [Super Mario Phaser](https://github.com/pablogozalvez/Super-Mario-Phaser)，保留单人随机关卡，增加第一世界 1-1～1-4、公开大厅和服务端统一计算的 2–4 人合作闯关。
 
