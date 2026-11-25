@@ -1,5 +1,6 @@
 import { makeLevel, stages } from "./level.mjs";
 import { emit } from "./events.mjs";
+import { TIMING, CHECKPOINT_RULES, enemySpeed } from "./rules.mjs";
 import {
   beginFlag,
   beginCastle,
@@ -20,7 +21,7 @@ import {
 const DT = 1 / 60,
   GRAVITY = 900,
   COIN_POP_TICKS = 30,
-  RESPAWN_TICKS = 120;
+  RESPAWN_TICKS = TIMING.respawn;
 const neutral = Object.freeze({
   axis: 0,
   jump: false,
@@ -91,7 +92,7 @@ function installStage(w, stage) {
   w.triggerTicks = new Map();
   w.spawnFlags = new Map();
   w.axeAt = 0;
-  w.countdown = 150;
+  w.countdown = TIMING.stageIntro;
   w.phase = "countdown";
   for (const p of w.players.values()) {
     const s = w.level.zones[0].spawn;
@@ -121,7 +122,7 @@ function installStage(w, stage) {
     p.crouch = false;
     p.h = p.form ? 32 : 16;
     p.y -= p.h - 16;
-    p.invincibleUntil = w.tick + 180;
+    p.invincibleUntil = w.tick + TIMING.spawnGrace;
   }
 }
 export function createWorld(seed = 1, options = {}) {
@@ -131,6 +132,7 @@ export function createWorld(seed = 1, options = {}) {
     revision: 0,
     stageIndex: Math.max(0, stages.indexOf(options.stage || "1-1")),
     campaign: options.stage !== "meadow",
+    cycle: Number.isInteger(options.cycle) ? clamp(options.cycle, 1, 99) : 1,
     players: new Map(),
     score: 0,
     coins: 0,
@@ -315,7 +317,7 @@ function hurt(w, p) {
     return;
   if (p.form) {
     setPlayerForm(w, p, 0);
-    p.invincibleUntil = w.tick + 150;
+    p.invincibleUntil = w.tick + TIMING.hurtGrace;
     emit(w, "hurt", p.x, p.y, p.id, 0, p.zone);
   } else loseLife(w, p);
 }
@@ -327,6 +329,13 @@ function advanceStage(w, stage) {
   }
   w.stageIndex = stages.indexOf(target);
   installStage(w, target);
+}
+export function startNextCycle(w) {
+  if (w.phase !== "won" || !w.campaign || w.cycle >= 99) return false;
+  w.cycle++;
+  w.stageIndex = 0;
+  installStage(w, stages[0]);
+  return true;
 }
 function portal(w, p, input) {
   if (w.tick < p.portalAt || p.transit) return;
@@ -632,6 +641,7 @@ function tickEnemies(w, previousFeet) {
       e.activeAt = w.tick;
     }
     const previousTop = e.y,
+      horizontalDT = DT * enemySpeed(w.cycle),
       age = w.tick - e.activeAt,
       target = nearby.sort(
         (a, b) => Math.abs(a.x - e.x) - Math.abs(b.x - e.x),
@@ -660,12 +670,12 @@ function tickEnemies(w, previousFeet) {
       if (e.flying) {
         if (e.y < 56) e.fallStarted = true;
         if (e.fallStarted) e.vy += (GRAVITY / 3.5) * DT;
-        e.x += e.vx * DT;
+        e.x += e.vx * horizontalDT;
         e.y += e.vy * DT;
       } else {
         e.vx = e.red ? -30 : -20;
         e.vy = e.vy || (e.red ? -5 : -3.75);
-        e.x += e.vx * DT;
+        e.x += e.vx * horizontalDT;
         e.y += e.vy * DT;
         if (e.y < 32) {
           e.y = 32;
@@ -688,7 +698,7 @@ function tickEnemies(w, previousFeet) {
         const dx = target.x - e.x;
         e.vx = clamp(e.vx + Math.sign(dx) * 3.75, -60, 60);
       } else e.vx *= 0.88;
-      e.x += e.vx * DT;
+      e.x += e.vx * horizontalDT;
     } else if (e.type === "podoboo") {
       if (age % 245 === 0) {
         e.jumping = true;
@@ -707,15 +717,15 @@ function tickEnemies(w, previousFeet) {
       }
       e.hidden = e.y >= 240;
     } else if (e.type === "bill") {
-      e.x += e.vx * DT;
+      e.x += e.vx * horizontalDT;
     } else if (e.type === "lakitu") {
       if (e.fleeing) {
         e.vx = -120;
-        e.x += e.vx * DT;
+        e.x += e.vx * horizontalDT;
       } else if (target) {
         const to = target.x + target.vx + Math.sin(Math.PI * age * 0.007) * 117;
         e.vx = clamp((to - e.x) * 2, -105, 105);
-        e.x += e.vx * DT;
+        e.x += e.vx * horizontalDT;
         if (age > 0 && age % 140 === 0) {
           spawnEnemy(w, "spiny-egg", e.zone, e.x, e.y + 12, {
             vx: (random(w) - 0.5) * 35,
@@ -801,9 +811,14 @@ function tickEnemies(w, previousFeet) {
               DT,
         );
         if (e.type === "hammerbro" && e.vy < 0) {
-          e.x += e.vx * DT;
+          e.x += e.vx * horizontalDT;
           e.y += e.vy * DT;
-        } else move(w, e, DT);
+        } else {
+          const speed = enemySpeed(w.cycle);
+          e.vx *= speed;
+          move(w, e, DT);
+          e.vx /= speed;
+        }
       }
       if (e.type === "spiny-egg" && e.ground) {
         e.type = "spiny";
@@ -872,8 +887,7 @@ export function stepWorld(w, inputs = new Map()) {
   w.stageTick++;
   const players = [...w.players.values()];
   const active = players.filter((p) => p.connected && p.alive);
-  if (active.some((p) => !p.autoEntrance))
-    w.time = Math.max(0, w.time - DT);
+  if (active.some((p) => !p.autoEntrance)) w.time = Math.max(0, w.time - DT);
   if (w.time <= 0 && active.length) {
     emit(w, "timeup", 0, 0);
     for (const p of active) loseLife(w, p);
@@ -912,7 +926,7 @@ export function stepWorld(w, inputs = new Map()) {
         p.vx = p.vy = 0;
         p.alive = true;
         p.respawnAt = 0;
-        p.invincibleUntil = w.tick + 180;
+        p.invincibleUntil = w.tick + TIMING.spawnGrace;
         p.riding = null;
         p.lastJump = p.lastFire = false;
         p.pose = "idle";
@@ -989,7 +1003,7 @@ export function stepWorld(w, inputs = new Map()) {
         vy: 80,
         until: w.tick + 150,
       });
-      p.nextFire = w.tick + 15;
+      p.nextFire = w.tick + TIMING.fireCooldown;
       emit(w, "fire", p.x, p.y, p.id, 0, p.zone);
     }
     p.lastJump = input.jump;
@@ -998,7 +1012,7 @@ export function stepWorld(w, inputs = new Map()) {
     const z = zoneOf(w, p);
     for (const checkpoint of z.checkpoints || [])
       if (
-        p.x > checkpoint.x + 64 &&
+        p.x > checkpoint.x + CHECKPOINT_RULES.activationDistance &&
         (p.checkpointZone !== p.zone || p.checkpoint < checkpoint.x)
       ) {
         p.checkpoint = checkpoint.x;
@@ -1078,10 +1092,14 @@ export function stepWorld(w, inputs = new Map()) {
       if (item.type === "oneup") life(w, p);
       else if (item.type === "star") p.starUntil = w.tick + 560;
       else {
-        const form = item.type === "flower" && p.form > 0 ? 2 : Math.max(1, p.form);
+        const form =
+          item.type === "flower" && p.form > 0 ? 2 : Math.max(1, p.form);
         setPlayerForm(w, p, form);
       }
-      p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
+      p.invincibleUntil = Math.max(
+        p.invincibleUntil,
+        w.tick + TIMING.pickupGrace,
+      );
       if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
       emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);
       item.used = true;
@@ -1141,8 +1159,7 @@ export function stepWorld(w, inputs = new Map()) {
       if (p.zone === h.zone && overlap(p, h)) hurt(w, p);
   }
   w.hammers = w.hammers.filter((h) => h.until > w.tick && h.y < 280);
-  if (players.length && players.every((p) => p.lives <= 0))
-    w.phase = "lost";
+  if (players.length && players.every((p) => p.lives <= 0)) w.phase = "lost";
 }
 export function snapshot(w) {
   return {
@@ -1150,6 +1167,7 @@ export function snapshot(w) {
     tick: w.tick,
     revision: w.revision,
     stage: w.level.stage,
+    cycle: w.cycle,
     phase: w.phase,
     countdown: Math.ceil(w.countdown / 60),
     time: Math.ceil(w.time),

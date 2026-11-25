@@ -156,6 +156,146 @@ test(
 );
 
 test(
+  "a two-seat turn room hands over, spectates the same state and resumes the active seat",
+  { timeout: 22000 },
+  async (t) => {
+    const app = createGameServer();
+    const address = await app.listen(0);
+    const base = `http://127.0.0.1:${address.port}`;
+    const clients = [];
+    t.after(async () => {
+      for (const c of clients) c.ws.terminate();
+      await app.close();
+    });
+    const host = await client(base, {
+      mode: "create",
+      playMode: "turns",
+      protocol: 2,
+    });
+    clients.push(host);
+    const first = await host.wait((m) => m.type === "welcome");
+    const guest = await client(base, {
+      mode: "join",
+      code: first.code,
+      protocol: 2,
+    });
+    clients.push(guest);
+    const second = await guest.wait((m) => m.type === "welcome");
+    const extra = await client(base, { mode: "join", code: first.code });
+    clients.push(extra);
+    await extra.wait((m) => m.type === "error" && m.message.includes("2名"));
+    const lobby = await host.wait(
+      (m) => m.type === "room" && m.players.length === 2,
+    );
+    assert.equal(lobby.mode, "turns");
+    assert.equal(lobby.maxPlayers, 2);
+    for (const c of [host, guest]) c.send({ type: "ready", ready: true });
+    await host.wait(
+      (m) => m.type === "room" && m.players.every((p) => p.ready),
+    );
+    host.send({ type: "start" });
+    const initial = await host.wait(
+      (m) => m.type === "state" && m.phase === "playing",
+    );
+    const spectator = await guest.wait(
+      (m) => m.type === "state" && m.tick === initial.tick,
+    );
+    assert.equal(initial.activePlayerId, first.id);
+    assert.ok(initial.prediction);
+    assert.equal(spectator.prediction, undefined);
+    assert.deepEqual(spectator.players, initial.players);
+    assert.equal(initial.standings.length, 2);
+
+    // A local server fixture reaches the death boundary, then the real tick loop hands over.
+    const session = app.rooms.get(first.code).world;
+    session.players.get(first.id).y = 280;
+    const handoff = await guest.wait(
+      (m) =>
+        m.type === "state" &&
+        m.phase === "playing" &&
+        m.activePlayerId === second.id,
+      10000,
+    );
+    assert.equal(handoff.players[0][0], second.id);
+    assert.equal(handoff.standings.find((p) => p.id === first.id).lives, 2);
+    assert.ok(handoff.prediction);
+    guest.ws.terminate();
+    await host.wait(
+      (m) =>
+        m.type === "state" &&
+        m.phase === "waiting" &&
+        m.activePlayerId === second.id,
+    );
+    const resumed = await client(base, {
+      mode: "join",
+      code: first.code,
+      token: second.token,
+      protocol: 2,
+    });
+    clients.push(resumed);
+    const restored = await resumed.wait((m) => m.type === "welcome");
+    assert.equal(restored.id, second.id);
+    assert.equal(restored.resumed, true);
+    const active = await resumed.wait(
+      (m) => m.type === "state" && m.phase === "playing",
+    );
+    assert.equal(active.activePlayerId, second.id);
+    assert.equal(active.standings.find((p) => p.id === first.id).lives, 2);
+    resumed.send({ type: "leave" });
+    await host.wait(
+      (m) =>
+        m.type === "state" &&
+        m.activePlayerId === first.id &&
+        m.standings.length === 1,
+    );
+  },
+);
+
+test("only a host can continue a completed room into its next cycle", async (t) => {
+  const app = createGameServer();
+  const address = await app.listen(0);
+  const base = `http://127.0.0.1:${address.port}`;
+  const clients = [];
+  t.after(async () => {
+    for (const c of clients) c.ws.terminate();
+    await app.close();
+  });
+  const host = await client(base, { mode: "create", stage: "8-4" });
+  clients.push(host);
+  const welcome = await host.wait((m) => m.type === "welcome");
+  const guest = await client(base, { mode: "join", code: welcome.code });
+  clients.push(guest);
+  await guest.wait((m) => m.type === "welcome");
+  for (const c of clients) c.send({ type: "ready", ready: true });
+  await host.wait(
+    (m) =>
+      m.type === "room" &&
+      m.players.length === 2 &&
+      m.players.every((p) => p.ready),
+  );
+  host.send({ type: "start" });
+  await host.wait((m) => m.type === "start");
+  // Completion is a fixture here. The input replay test exercises the final course itself.
+  const game = app.rooms.get(welcome.code).world;
+  game.phase = "won";
+  game.score = 5000;
+  game.coins = 7;
+  guest.send({ type: "next-cycle" });
+  await delay(100);
+  assert.equal(game.cycle, 1);
+  host.send({ type: "next-cycle" });
+  const next = await host.wait((m) => m.type === "state" && m.cycle === 2);
+  assert.equal(next.stage, "1-1");
+  assert.equal(next.phase, "countdown");
+  assert.equal(next.score, 5000);
+  assert.equal(next.coins, 7);
+  const same = await guest.wait(
+    (m) => m.type === "state" && m.tick === next.tick && m.cycle === 2,
+  );
+  assert.deepEqual(same.players, next.players);
+});
+
+test(
   "bad tokens and foreign WebSocket origins do not crash or join the server",
   { timeout: 5000 },
   async (t) => {

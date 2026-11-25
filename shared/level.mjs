@@ -3,6 +3,7 @@ import corrections from "../data/campaign-corrections.json" with { type: "json" 
 import patterns from "../data/campaign-patterns.json" with { type: "json" };
 import spriteMetadata from "../data/campaign-sprites.json" with { type: "json" };
 import { makeLevel as meadow } from "./meadow.mjs";
+import { checkpointForZone } from "./checkpoints.mjs";
 const maps = structuredClone(sourceMaps);
 for (const correction of corrections) {
   const command = maps[correction.stage].areas[correction.area].creation.find(
@@ -559,28 +560,8 @@ export function makeLevel(seed = 1, stage = "1-1") {
       const last = l.platforms.filter((t) => t.type === "ground").at(-1);
       if (last && last.x + last.w < l.width) last.w = l.width - last.x;
     }
-    // Original checkpoint remains halfway through the main course, on an actual floor tile.
-    if (!l.sky && !area.setting.includes("Castle")) {
-      const floor = l.platforms
-        .filter(
-          (t) =>
-            t.type === "ground" &&
-            t.w >= 96 &&
-            t.x < l.width * 0.65 &&
-            t.x + t.w > l.width * 0.45,
-        )
-        .sort(
-          (a, b) => Math.abs(a.x - l.width / 2) - Math.abs(b.x - l.width / 2),
-        )[0];
-      if (floor)
-        l.checkpoints.push({
-          x: Math.max(
-            floor.x + 16,
-            Math.min(l.width / 2, floor.x + floor.w - 32),
-          ),
-          y: floor.y - 16,
-        });
-    }
+    const checkpoint = checkpointForZone(l);
+    if (checkpoint) l.checkpoints.push(checkpoint);
     return l;
   });
   const locations = map.locations.map((loc, i) => {

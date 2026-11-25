@@ -58,6 +58,12 @@
               value="玩家"
             />
             <div class="room-options">
+              <label for="play-mode"
+                >联机玩法<select id="play-mode">
+                  <option value="turns">双人轮换 · 2 人</option>
+                  <option value="coop">同时合作 · 2–4 人</option>
+                </select></label
+              >
               <label for="room-visibility"
                 >房间可见性<select id="room-visibility">
                   <option value="public">公开 · 大厅可加入</option>
@@ -74,7 +80,8 @@
               >
             </div>
             <button id="create-room" class="primary">
-              创建合作房间 <span>2–4 人</span>
+              <span id="create-room-label">创建双人房间</span
+              ><span id="create-room-capacity">2 人</span>
             </button>
             <form id="join-form" class="join-form">
               <label class="sr-only" for="room-code">六位房间码</label>
@@ -92,6 +99,7 @@
               </button>
             </form>
             <button id="classic-mode" class="plain">单人连续闯关</button>
+            <button id="local-turns" class="plain">本地双人轮换</button>
             <button id="random-mode" class="plain subtle">单人随机关卡</button>
           </div>
           <section class="public-hall" aria-labelledby="hall-title">
@@ -163,6 +171,9 @@
       </button>
       <button id="world-select-button" class="secondary" hidden>
         选择世界（B）
+      </button>
+      <button id="next-cycle-button" class="primary" hidden>
+        进入下一周目
       </button>
     </div>
     <div

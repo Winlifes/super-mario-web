@@ -67,6 +67,7 @@
     soloAuto = false,
     hallLoading = false,
     hallSignature = "";
+  const viewId = (state) => state?.activePlayerId || me;
   $("nickname").value = readStorage(localStorage, "coop-name") || "玩家";
   $("mute-button").textContent = muted ? "声音关" : "声音开";
   $("mute-button").setAttribute("aria-pressed", String(muted));
@@ -87,10 +88,24 @@
     $("join-room").disabled = value;
     $("quick-join").disabled = value;
     $("classic-mode").disabled = value;
+    $("local-turns").disabled = value;
   }
   function send(message) {
     if (localMode) {
       if (message.type === "again") beginLocalRound();
+      if (message.type === "next-cycle" && localGame?.nextCycle()) {
+        latestLevel = localGame.level;
+        latestState = {
+          ...localGame.snapshot(),
+          receivedAt: performance.now(),
+        };
+        round = `local:${latestState.revision}`;
+        resetInput();
+        seenEvent = 0;
+        simulationAt = 0;
+        $("touch-controls").hidden = !matchMedia("(pointer:coarse)").matches;
+        if (scene) scene.installLevel(latestLevel, round);
+      }
       return;
     }
     if (socket?.readyState === WebSocket.OPEN)
@@ -150,7 +165,7 @@
     $("room-panel").hidden = false;
     $("room-label").textContent = room.code;
     $("room-meta").textContent =
-      `${room.mode === "solo" ? "单人挑战" : room.visibility === "private" ? "私密房间" : "公开房间"} · ${room.stage} 起点 · ${room.players.length}/${room.maxPlayers} 人`;
+      `${room.mode === "turns" ? "双人轮换" : room.mode === "solo" ? "单人挑战" : "同时合作"} · ${room.visibility === "private" ? "私密房间" : "公开房间"} · ${room.stage} 起点 · ${room.players.length}/${room.maxPlayers} 人`;
     const list = $("players");
     list.replaceChildren();
     room.players.forEach((p) => {
@@ -227,7 +242,7 @@
           title = document.createElement("strong"),
           info = document.createElement("p");
         title.textContent = r.title;
-        info.textContent = `${r.players}/${r.maxPlayers} 人 · ${r.stage} · ${r.joinable ? "等待队友" : r.phase === "lobby" ? "房间已满" : "闯关中"}`;
+        info.textContent = `${r.mode === "turns" ? "双人轮换" : "同时合作"} · ${r.players}/${r.maxPlayers} 人 · ${r.stage} · ${r.joinable ? "等待队友" : r.phase === "lobby" ? "房间已满" : "闯关中"}`;
         const button = document.createElement("button");
         button.className = "small";
         button.textContent = r.joinable
@@ -269,7 +284,7 @@
     intentional = false;
     const name = $("nickname").value.trim().slice(0, 16) || "玩家";
     writeStorage(localStorage, "coop-name", name);
-    status(resumeToken ? "正在恢复房间连接…" : "正在连接合作房间…");
+    status(resumeToken ? "正在恢复房间连接…" : "正在连接房间…");
     const endpoint = new URL("ws", location.href);
     endpoint.protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(endpoint);
@@ -282,6 +297,7 @@
         token: resumeToken,
         name,
         solo,
+        playMode: $("play-mode").value,
         protocol: MarioRuntime.INPUT_PROTOCOL,
         visibility: $("room-visibility").value,
         stage: $("stage-choice").value,
@@ -407,6 +423,13 @@
     location.assign(url.pathname);
   }
   $("create-room").addEventListener("click", () => connect("create"));
+  $("play-mode").addEventListener("change", () => {
+    const turns = $("play-mode").value === "turns";
+    $("create-room-label").textContent = turns
+      ? "创建双人房间"
+      : "创建合作房间";
+    $("create-room-capacity").textContent = turns ? "2 人" : "2–4 人";
+  });
   $("quick-join").addEventListener("click", () => connect("quick"));
   $("join-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -424,6 +447,9 @@
   $("start-button").addEventListener("click", () => send({ type: "start" }));
   $("world-select-button").addEventListener("click", leave);
   $("again-button").addEventListener("click", () => send({ type: "again" }));
+  $("next-cycle-button").addEventListener("click", () =>
+    send({ type: "next-cycle" }),
+  );
   $("leave-lobby").addEventListener("click", leave);
   $("leave-game").addEventListener("click", leave);
   $("copy-invite").addEventListener("click", async () => {
@@ -444,7 +470,7 @@
     if (scene) scene.sound.mute = muted;
   });
   function beginLocalRound() {
-    localGame = MarioRuntime.createLocalGame(room.stage, 1);
+    localGame = MarioRuntime.createLocalGame(room.stage, 1, room.mode);
     latestLevel = localGame.level;
     round = `local:${Date.now()}`;
     latestState = { ...localGame.snapshot(), receivedAt: performance.now() };
@@ -459,7 +485,8 @@
     $("pause-button").hidden = false;
     $("pause-button").textContent = "暂停";
     $("touch-controls").hidden = !matchMedia("(pointer:coarse)").matches;
-    $("connection-state").textContent = "单人 · 本地运行";
+    $("connection-state").textContent =
+      room.mode === "turns" ? "双人轮换 · 本地运行" : "单人 · 本地运行";
     if (scene) scene.installLevel(latestLevel, round);
   }
   function togglePause(force) {
@@ -484,7 +511,7 @@
     renderHud(latestState);
   }
   $("pause-button").addEventListener("click", () => togglePause());
-  $("classic-mode").addEventListener("click", () => {
+  function beginLocal(mode) {
     if (connecting || socket?.readyState === WebSocket.OPEN) return;
     localMode = true;
     me = "local";
@@ -493,16 +520,26 @@
     const name = $("nickname").value.trim().slice(0, 16) || "玩家";
     writeStorage(localStorage, "coop-name", name);
     room = {
-      mode: "solo",
+      mode,
       stage: $("stage-choice").value,
       hostId: me,
       players: [{ id: me, name, slot: 0, connected: true, ready: true }],
     };
+    if (mode === "turns")
+      room.players.push({
+        id: "local2",
+        name: "玩家 2",
+        slot: 1,
+        connected: true,
+        ready: true,
+      });
     busy(true);
-    status("正在准备单人资源…");
+    status("正在准备游戏资源…");
     bootCoop();
     if (assetsReady) beginLocalRound();
-  });
+  }
+  $("classic-mode").addEventListener("click", () => beginLocal("solo"));
+  $("local-turns").addEventListener("click", () => beginLocal("turns"));
   $("random-mode").addEventListener("click", () => {
     $("lobby").hidden = true;
     $("game").hidden = false;
@@ -802,7 +839,9 @@
         this.music.play();
       }
       installLevel(bundle, currentRound) {
-        const own = latestState?.players.find((p) => p[0] === me),
+        const own = latestState?.players.find(
+            (p) => p[0] === viewId(latestState),
+          ),
           zone = own?.[11] || 0;
         const level = bundle.zones?.[zone] || bundle,
           key = `${currentRound}:${bundle.stage}:${zone}`;
@@ -1263,7 +1302,8 @@
             this.actors.set(id, a);
           }
           const s = a.sprite,
-            death = !alive && deathAge >= 0 && deathAge < 120;
+            death =
+              !alive && deathAge >= 0 && deathAge < MarioRuntime.TIMING.respawn;
           let key = form === 2 ? "coop-fire" : form ? "coop-big" : "coop-small";
           let f = crouch
             ? 4
@@ -1456,10 +1496,10 @@
             }
           }
         }
-        const self = this.actors.get(me);
+        const self = this.actors.get(viewId(state));
         if (self) this.cameras.main.centerOn(self.sprite.x + 35, 120);
 
-        const own = state.players.find((p) => p[0] === me);
+        const own = state.players.find((p) => p[0] === viewId(state));
         if (!localPaused && ["playing", "countdown"].includes(state.phase))
           this.musicFor(own?.[12] ? "coop-star-music" : this.themeKey());
         else {
@@ -1589,9 +1629,11 @@
     });
   }
   function renderHud(state) {
-    $("stage-label").textContent = scene?.level?.title || state.stage;
+    const cycle = state.cycle || 1;
+    $("stage-label").textContent =
+      `${scene?.level?.title || state.stage}${cycle > 1 ? ` · 第 ${cycle} 周目` : ""}`;
     $("team-score").textContent =
-      `团队分数 ${String(state.score).padStart(6, "0")}`;
+      `${state.activePlayerId ? "当前得分" : "团队分数"} ${String(state.score).padStart(6, "0")}`;
     $("team-coins").textContent = `金币 ${state.coins}`;
     $("game-time").textContent = `时间 ${state.time}`;
     const own = state.players.find((p) => p[0] === me);
@@ -1601,6 +1643,15 @@
         return `${member?.name || "玩家"}${p[0] === me ? "（你）" : ""} · ${p[9]}条命${!p[10] ? " · 重连中" : !p[7] ? (p[9] > 0 ? " · 复活中" : " · 观战") : p[11] !== own?.[11] ? " · 其他区域" : ""}`;
       })
       .join("　");
+    if (state.standings) {
+      $("team-members").textContent = state.standings
+        .map((p) => {
+          const member = room?.players.find((m) => m.id === p.id);
+          return `${member?.name || `玩家 ${p.slot + 1}`}${p.id === state.activePlayerId ? " · 当前回合" : ""} · ${p.stage} · 第 ${p.cycle} 周目 · ${p.lives}条命 · ${p.coins}金币 · ${p.score}分${p.connected ? "" : " · 等待重连"}`;
+        })
+        .join("　");
+    }
+    $("next-cycle-button").hidden = true;
     if (localMode && localPaused) {
       $("round-message").hidden = false;
       $("round-message").classList.remove("completed");
@@ -1612,23 +1663,37 @@
     }
     const ending = ["won", "lost"].includes(state.phase),
       timedOut = state.phase === "timeout",
+      turn = state.phase === "turn" || state.phase === "waiting",
       transition = ["cleared", "bridge", "rescue", "warp"].includes(
         state.phase,
       );
     $("round-message").hidden =
-      state.phase !== "countdown" && !timedOut && !ending;
+      state.phase !== "countdown" && !timedOut && !turn && !ending;
     $("round-message").classList.toggle("completed", state.phase === "won");
     if (ending) $("touch-controls").hidden = true;
     $("again-button").hidden = true;
     $("world-select-button").hidden = true;
-    if (timedOut) {
+    if (turn) {
+      resetInput();
+      const member = room?.players.find((p) => p.id === state.activePlayerId);
+      $("round-title").textContent =
+        state.phase === "waiting"
+          ? "等待玩家重连"
+          : state.turnPhase === "death"
+            ? `${member?.name || "玩家"} 失误`
+            : `轮到 ${member?.name || "下一位玩家"}`;
+      $("round-detail").textContent =
+        state.phase === "waiting"
+          ? "当前回合已暂停。"
+          : `${Math.max(1, state.countdown)} 秒后继续。`;
+    } else if (timedOut) {
       resetInput();
       $("round-title").textContent = "时间到";
       $("round-detail").textContent =
         `${Math.max(1, state.countdown)} 秒后继续闯关。`;
     } else if (state.phase === "countdown") {
       $("round-title").textContent =
-        `WORLD ${state.stage} · ${Math.max(1, state.countdown)}`;
+        `${state.activePlayerId ? `${room?.players.find((p) => p.id === state.activePlayerId)?.name || "玩家"} · ` : ""}WORLD ${state.stage} · ${Math.max(1, state.countdown)}`;
       $("round-detail").textContent = state.stage.endsWith("-4")
         ? "城堡：越过机关、触碰斧头，救援后将继续下一世界。"
         : scene?.underwater
@@ -1641,19 +1706,24 @@
       resetInput();
       $("round-title").textContent =
         state.phase === "won"
-          ? "八大世界通关！"
+          ? `第 ${cycle} 周目通关！`
           : state.time <= 0
             ? "时间到"
             : "再试一次吧";
       $("round-detail").textContent =
         state.phase === "won"
-          ? `公主获救！团队分数 ${state.score}。可返回房间重玩，或按 B 重新选择世界。`
+          ? `本轮得分 ${state.score}。可进入下一周目，或按 B 重新选择世界。`
           : `团队分数 ${state.score}，共收集 ${state.coins} 枚金币。`;
       $("again-button").hidden = room?.hostId !== me;
       $("again-button").textContent = localMode
         ? "重新挑战本关"
         : "返回房间，再来一局";
       $("world-select-button").hidden = state.phase !== "won";
+      $("next-cycle-button").hidden =
+        state.phase !== "won" ||
+        cycle >= 99 ||
+        (!localMode && room?.hostId !== me);
+      $("next-cycle-button").textContent = `进入第 ${cycle + 1} 周目`;
     }
   }
 

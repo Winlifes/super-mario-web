@@ -1,5 +1,6 @@
 import { emit } from "./events.mjs";
 import { setPlayerForm } from "./motion.mjs";
+import { TIMING } from "./rules.mjs";
 const DT = 1 / 60;
 const score = (w, value, p) => {
   w.score += value;
@@ -296,11 +297,8 @@ export function travelTo(w, p, target, emerge = true) {
   p.jumping = false;
   p.jumpLevel = 0;
   p.springUntil = 0;
-  p.portalAt = w.tick + 90;
-  p.invincibleUntil = w.tick + 120;
-  p.checkpoint = p.x;
-  p.checkpointY = to.y;
-  p.checkpointZone = p.zone;
+  p.portalAt = w.tick + TIMING.portalCooldown;
+  p.invincibleUntil = w.tick + TIMING.portalGrace;
   p.autoEntrance = false;
   if (emerge && to.entry === "PipeVertical") {
     const targetY = p.y;

@@ -21,7 +21,7 @@ npm start
 - 发行目录：`/opt/mario-web/releases/<release-id>`，`current` 指向当前发行。
 - Node.js 运行时：`/opt/mario-web/runtime/bin/node`。
 - 环境变量：`/etc/mario-web.env`；凭据不进入仓库或发行包。
-- 每房间最多4人，全站默认最多16名连接中的玩家、8个房间。
+- 每个合作房间最多4人，轮换房间最多2人，全站默认最多16名连接中的玩家、8个房间。
 - 新版切换脚本发现在线玩家会停止发布；启动后健康检查失败时尝试恢复旧版。
 
 房间码不需要登录；随机重连令牌只存在当前浏览器标签页的会话存储中。断线席位保留45秒。房间和对局状态保存在服务端进程内存中，服务重启不会恢复进行中的对局。
@@ -42,7 +42,7 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 
 ## OSS 资源分发
 
-当前使用北京的 `mac-cat` bucket。图片、字体和音频从 `mario/20261124-controls-v2/` 读取，JavaScript 从 `mario/20261125-retry-v1/` 读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+当前使用北京的 `mac-cat` bucket。图片、字体和音频从 `mario/20261124-controls-v2/` 读取，JavaScript 从 `mario/20261125-turns-v1/` 读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
 
 构建与校验：
 

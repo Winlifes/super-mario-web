@@ -10,7 +10,14 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { WebSocketServer, WebSocket } from "ws";
-import { createWorld, addPlayer, stepWorld, snapshot } from "./world.mjs";
+import {
+  createWorld,
+  addPlayer,
+  stepWorld,
+  snapshot,
+  startNextCycle,
+  removePlayer,
+} from "../shared/session.mjs";
 import { publicLevel, stages } from "../shared/level.mjs";
 import {
   INPUT_PROTOCOL,
@@ -136,6 +143,7 @@ export function createGameServer(options = {}) {
           maxPlayers: r.maxPlayers,
           phase: r.world?.phase || "lobby",
           stage: r.world?.level.stage || r.stage,
+          mode: r.mode,
           joinable: !r.world && r.players.size < r.maxPlayers,
         }));
       response.end(
@@ -265,7 +273,9 @@ export function createGameServer(options = {}) {
     const body = room.world?.players.get(player.id);
     send(
       player.socket,
-      body && player.protocol === INPUT_PROTOCOL
+      body &&
+        player.protocol === INPUT_PROTOCOL &&
+        (room.mode !== "turns" || room.world.activeId === player.id)
         ? {
             ...message,
             prediction: {
@@ -401,6 +411,8 @@ export function createGameServer(options = {}) {
                   (r) =>
                     r.visibility === "public" &&
                     !r.world &&
+                    r.mode ===
+                      (message.playMode === "turns" ? "turns" : "coop") &&
                     r.players.size < r.maxPlayers &&
                     [...r.players.values()].some((p) => p.connected),
                 )
@@ -424,8 +436,16 @@ export function createGameServer(options = {}) {
                 : message.visibility === "private"
                   ? "private"
                   : "public",
-              mode: message.solo ? "solo" : "coop",
-              maxPlayers: message.solo ? 1 : 4,
+              mode: message.solo
+                ? "solo"
+                : message.playMode === "turns"
+                  ? "turns"
+                  : "coop",
+              maxPlayers: message.solo
+                ? 1
+                : message.playMode === "turns"
+                  ? 2
+                  : 4,
               title: cleanName(
                 message.title || `${cleanName(message.name)}的房间`,
               ),
@@ -550,6 +570,7 @@ export function createGameServer(options = {}) {
         }
         room.world = createWorld(room.seed + room.round++, {
           stage: room.stage,
+          mode: room.mode,
         });
         for (const p of members) {
           p.input = neutral();
@@ -566,6 +587,24 @@ export function createGameServer(options = {}) {
         broadcastRoom(room);
         notify(room, snapshot(room.world));
       } else if (
+        message.type === "next-cycle" &&
+        room.hostId === player.id &&
+        room.world &&
+        startNextCycle(room.world)
+      ) {
+        for (const member of room.players.values()) {
+          member.input = neutral();
+          member.inputQueue = [];
+          member.appliedSeq = member.lastSeq;
+        }
+        notify(room, {
+          type: "start",
+          level: publicLevel(room.world.level),
+          round: room.round,
+          revision: room.world.revision,
+        });
+        notify(room, snapshot(room.world));
+      } else if (
         message.type === "again" &&
         room.hostId === player.id &&
         room.world &&
@@ -576,7 +615,7 @@ export function createGameServer(options = {}) {
         broadcastRoom(room);
       } else if (message.type === "leave") {
         room.players.delete(player.id);
-        room.world?.players.delete(player.id);
+        if (room.world) removePlayer(room.world, player.id);
         chooseHost(room);
         broadcastRoom(room);
         ws.close(1000, "Left room");
@@ -660,7 +699,7 @@ export function createGameServer(options = {}) {
       for (const [id, p] of room.players)
         if (!p.connected && now - p.leftAt > reconnectMs) {
           room.players.delete(id);
-          room.world?.players.delete(id);
+          if (room.world) removePlayer(room.world, id);
           changed = true;
         }
       if (changed) {
