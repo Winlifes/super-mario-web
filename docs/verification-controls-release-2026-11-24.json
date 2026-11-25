@@ -1,0 +1,61 @@
+{
+  "recordedAt": "2026-11-25T07:29:22.565Z",
+  "release": "20261124-controls-v2",
+  "origin": "https://game.winlife.fun/mario/",
+  "assetBaseURL": "https://mac-cat.oss-cn-beijing.aliyuncs.com/mario/20261124-controls-v2/",
+  "archiveSha256": "15861d41cc22d9db4093c51b2e19916ab64257209456464dd25ca47e8f4aa8ec",
+  "node": "24.22.2",
+  "tests": 54,
+  "naturalInputReplays": 10,
+  "oss": {
+    "files": 212,
+    "bytes": 12652256,
+    "hashesVerified": true,
+    "cors": true,
+    "audioRange": true
+  },
+  "multiplayer": {
+    "protocol": 2,
+    "players": 4,
+    "stage": "8-4",
+    "sharedLevel": true,
+    "sharedState": true,
+    "inputAcknowledgement": true,
+    "capacityLimit": true,
+    "reconnect": true,
+    "encryptedWebSocket": true
+  },
+  "safari": {
+    "soloLocal": true,
+    "movement": true,
+    "jump": true,
+    "pause": true,
+    "backgroundAutoPause": true,
+    "explicitResume": true,
+    "coop": {
+      "startedAt": "2026-11-25T07:28:14.776Z",
+      "origin": "https://game.winlife.fun/mario/",
+      "players": 2,
+      "browserPlayerMoved": true,
+      "initialX": 40,
+      "x": 53.6,
+      "tick": 663,
+      "protocol": 2
+    }
+  },
+  "cleanup": {
+    "players": 0,
+    "rooms": 0
+  },
+  "otherHealthEndpoints": [
+    {
+      "url": "https://game.winlife.fun/api/health",
+      "status": 200
+    },
+    {
+      "url": "https://ra.winlife.fun/healthz",
+      "status": 200
+    }
+  ],
+  "fidelityBoundary": "Source-backed FullScreenMario movement calibration and web-port verification; NES ROM frame comparison not performed."
+}

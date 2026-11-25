@@ -12,6 +12,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
+import { build } from "esbuild";
 import { normalizeAssetBase } from "../shared/asset-config.mjs";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
@@ -60,6 +61,19 @@ for (const entry of [
       !path.relative(root, filename).split(path.sep).includes("showcase"),
   });
 }
+
+await build({
+  entryPoints: [path.join(root, "javascript/runtime.mjs")],
+  outfile: path.join(output, "javascript/runtime.js"),
+  bundle: true,
+  format: "iife",
+  globalName: "MarioRuntime",
+  platform: "browser",
+  target: ["es2022"],
+  minify: true,
+  legalComments: "eof",
+});
+rmSync(path.join(output, "javascript/runtime.mjs"));
 
 const indexFile = path.join(output, "index.html");
 const sourceHtml = readFileSync(indexFile, "utf8");

@@ -1,14 +1,30 @@
 {
   "stage": "4-4",
   "phase": "bridge",
-  "ticks": 1414,
+  "ticks": 1422,
   "x": 2883.399999999987,
   "zone": 0,
   "lives": 3,
   "score": 0,
   "route": [
     {
-      "ticks": 40,
+      "ticks": 20,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 28,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -24,7 +40,7 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 20,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -32,7 +48,7 @@
       "down": false
     },
     {
-      "ticks": 8,
+      "ticks": 4,
       "axis": 0,
       "jump": false,
       "run": true,
@@ -41,6 +57,14 @@
     },
     {
       "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -48,23 +72,31 @@
       "down": false
     },
     {
+      "ticks": 4,
+      "axis": -1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
       "ticks": 8,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
       "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 0,
       "jump": true,
       "run": true,
       "fire": false,
       "down": false
     },
     {
-      "ticks": 8,
+      "ticks": 4,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -72,7 +104,7 @@
       "down": false
     },
     {
-      "ticks": 40,
+      "ticks": 36,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -80,55 +112,7 @@
       "down": false
     },
     {
-      "ticks": 16,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 96,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
+      "ticks": 12,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -144,23 +128,7 @@
       "down": false
     },
     {
-      "ticks": 8,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
+      "ticks": 12,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -168,7 +136,7 @@
       "down": false
     },
     {
-      "ticks": 112,
+      "ticks": 16,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -176,7 +144,7 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 12,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -184,15 +152,7 @@
       "down": false
     },
     {
-      "ticks": 8,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 24,
+      "ticks": 152,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -200,7 +160,23 @@
       "down": false
     },
     {
-      "ticks": 24,
+      "ticks": 4,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 120,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 12,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -216,7 +192,303 @@
       "down": false
     },
     {
+      "ticks": 12,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 28,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
       "ticks": 8,
+      "axis": 0,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 12,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 20,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 20,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 20,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 128,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 12,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": -1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 172,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 12,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -232,135 +504,7 @@
       "down": false
     },
     {
-      "ticks": 8,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 24,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": -1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": -1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": -1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 48,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 96,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 24,
-      "axis": -1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 192,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 16,
-      "axis": 1,
-      "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 24,
-      "axis": 1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
+      "ticks": 4,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -376,13 +520,22 @@
       "down": false
     },
     {
-      "ticks": 8,
+      "ticks": 4,
       "axis": 1,
       "jump": true,
       "run": true,
       "fire": false,
       "down": false
+    },
+    {
+      "ticks": 4,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
     }
   ],
-  "verification": "Normal spawn, seed 1, control inputs only. No coordinates, items, lives or completion state modified."
+  "inputsOnly": true,
+  "normalSpawn": true
 }

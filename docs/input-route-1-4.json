@@ -1,14 +1,14 @@
 {
   "stage": "1-4",
   "phase": "bridge",
-  "ticks": 1118,
-  "x": 2242.494444444459,
+  "ticks": 1116,
+  "x": 2242.5738621062847,
   "zone": 0,
   "lives": 3,
   "score": 200,
   "route": [
     {
-      "ticks": 72,
+      "ticks": 88,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -32,7 +32,7 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 32,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -40,7 +40,7 @@
       "down": false
     },
     {
-      "ticks": 168,
+      "ticks": 152,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -49,30 +49,38 @@
     },
     {
       "ticks": 8,
-      "axis": 1,
-      "jump": true,
+      "axis": -1,
+      "jump": false,
       "run": true,
       "fire": false,
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 8,
+      "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
       "axis": 1,
       "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": 0,
+      "jump": true,
       "run": true,
       "fire": false,
       "down": false
     },
     {
       "ticks": 24,
-      "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
       "axis": -1,
       "jump": false,
       "run": true,
@@ -81,16 +89,8 @@
     },
     {
       "ticks": 8,
-      "axis": 1,
+      "axis": 0,
       "jump": true,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": false,
       "run": true,
       "fire": false,
       "down": false
@@ -99,22 +99,6 @@
       "ticks": 8,
       "axis": 0,
       "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": -1,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
-      "jump": true,
       "run": true,
       "fire": false,
       "down": false
@@ -128,7 +112,15 @@
       "down": false
     },
     {
-      "ticks": 112,
+      "ticks": 8,
+      "axis": 0,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 120,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -176,7 +168,7 @@
       "down": false
     },
     {
-      "ticks": 72,
+      "ticks": 40,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -200,6 +192,22 @@
       "down": false
     },
     {
+      "ticks": 8,
+      "axis": 1,
+      "jump": true,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 24,
+      "axis": 1,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
       "ticks": 16,
       "axis": 1,
       "jump": true,
@@ -224,7 +232,7 @@
       "down": false
     },
     {
-      "ticks": 88,
+      "ticks": 80,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -240,7 +248,7 @@
       "down": false
     },
     {
-      "ticks": 8,
+      "ticks": 24,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -248,21 +256,14 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 6,
       "axis": 0,
-      "jump": false,
-      "run": true,
-      "fire": false,
-      "down": false
-    },
-    {
-      "ticks": 8,
-      "axis": 1,
       "jump": false,
       "run": true,
       "fire": false,
       "down": false
     }
   ],
-  "verification": "Normal spawn, seed 1, control inputs only. No coordinates, items, lives or completion state modified."
+  "inputsOnly": true,
+  "normalSpawn": true
 }

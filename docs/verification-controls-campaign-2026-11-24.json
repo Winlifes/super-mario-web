@@ -1,0 +1,693 @@
+{
+  "recordedAt": "2026-11-25T07:18:44.166Z",
+  "sourceRevision": "dc7db1fdea151684d78425bd1152ff680c7047d6",
+  "stages": 32,
+  "normalInputReplays": [
+    {
+      "stage": "1-1",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "d3d835b228c0e440c64ea7dc173440fed16ecddecac99e8681fca3ecd1891299",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1338,
+      "finalStage": "1-2",
+      "finalPhase": "countdown",
+      "finalScore": 21350,
+      "cutsceneFrames": 1029,
+      "timeline": [
+        {
+          "tick": 1338,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 1800,
+          "time": 381,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1406,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 1800,
+          "time": 381,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1427,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 1800,
+          "time": 381,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1441,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 1800,
+          "time": 381,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1530,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 1800,
+          "time": 381,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1912,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 20850,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1947,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 20850,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "1-2",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "558eb936168ec86b31f7256402e2cf76cf45cec166480f2fad21beff2f4af515",
+      "zoneOrder": [
+        0,
+        1,
+        3
+      ],
+      "endingTick": 1631,
+      "finalStage": "1-3",
+      "finalPhase": "countdown",
+      "finalScore": 22900,
+      "cutsceneFrames": 1026,
+      "timeline": [
+        {
+          "tick": 1631,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 4000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1699,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 4000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1720,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 4000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1734,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 4000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1823,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 4000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2202,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 22900,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2237,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 22900,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "1-3",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "c2c09a07683640c82cc20dd7f5512172e30d9e256a4999b4df794d79253e6d86",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1193,
+      "finalStage": "1-4",
+      "finalPhase": "countdown",
+      "finalScore": 17950,
+      "cutsceneFrames": 939,
+      "timeline": [
+        {
+          "tick": 1193,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 2300,
+          "time": 283,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1261,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 2300,
+          "time": 283,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1282,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 2300,
+          "time": 283,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1296,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 2300,
+          "time": 283,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1393,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 2300,
+          "time": 283,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1677,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 16450,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1712,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 16450,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "1-4",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "af0f63527e3c2bc7f249557fa30ea86775bcabd17002eee8178635d9d2ed0f31",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1116,
+      "finalStage": "2-1",
+      "finalPhase": "countdown",
+      "finalScore": 200,
+      "cutsceneFrames": 840,
+      "timeline": [
+        {
+          "tick": 1116,
+          "phase": "bridge",
+          "routine": "bridge",
+          "score": 200,
+          "time": 284,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1256,
+          "phase": "rescue",
+          "routine": "walk",
+          "score": 200,
+          "time": 284,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        },
+        {
+          "tick": 1396,
+          "phase": "rescue",
+          "routine": "dialog",
+          "score": 200,
+          "time": 284,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        }
+      ]
+    },
+    {
+      "stage": "2-2",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "6e859b72c8b93a34ab3cd1e9760158c2071d1f2d3399091c7cd95ba83ddafd25",
+      "zoneOrder": [
+        0,
+        1,
+        2
+      ],
+      "endingTick": 2308,
+      "finalStage": "2-3",
+      "finalPhase": "countdown",
+      "finalScore": 23300,
+      "cutsceneFrames": 1014,
+      "timeline": [
+        {
+          "tick": 2308,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 2000,
+          "time": 366,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2376,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 2000,
+          "time": 366,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2397,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 2000,
+          "time": 366,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2411,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 2000,
+          "time": 366,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2500,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 2000,
+          "time": 366,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2867,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 20300,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2902,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 20300,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "3-3",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "3c0cd9fc1bac245b001e1de896e419c45ca91942ca1ed8ca30062298f7b7e5e3",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1051,
+      "finalStage": "3-4",
+      "finalPhase": "countdown",
+      "finalScore": 16550,
+      "cutsceneFrames": 941,
+      "timeline": [
+        {
+          "tick": 1051,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 2300,
+          "time": 285,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1119,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 2300,
+          "time": 285,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1140,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 2300,
+          "time": 285,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1154,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 2300,
+          "time": 285,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1251,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 2300,
+          "time": 285,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1537,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 16550,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1572,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 16550,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "4-1",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "b4f41941f2f0fb546e38a67c44e7cec6395f71638f6ebae66e50ff73479e49c2",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1518,
+      "finalStage": "4-2",
+      "finalPhase": "countdown",
+      "finalScore": 23900,
+      "cutsceneFrames": 1026,
+      "timeline": [
+        {
+          "tick": 1518,
+          "phase": "cleared",
+          "routine": "slide",
+          "score": 5000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1586,
+          "phase": "cleared",
+          "routine": "salute",
+          "score": 5000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1607,
+          "phase": "cleared",
+          "routine": "off-pole",
+          "score": 5000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1621,
+          "phase": "cleared",
+          "routine": "walk",
+          "score": 5000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1710,
+          "phase": "cleared",
+          "routine": "count",
+          "score": 5000,
+          "time": 378,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2089,
+          "phase": "cleared",
+          "routine": "count-wait",
+          "score": 23900,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2124,
+          "phase": "cleared",
+          "routine": "fireworks",
+          "score": 23900,
+          "time": 0,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        }
+      ]
+    },
+    {
+      "stage": "4-4",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "379894a021e71c7be99d87ca3df0e8bf36b006b560e57d7b66bd3b34d052c159",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1422,
+      "finalStage": "5-1",
+      "finalPhase": "countdown",
+      "finalScore": 0,
+      "cutsceneFrames": 840,
+      "timeline": [
+        {
+          "tick": 1422,
+          "phase": "bridge",
+          "routine": "bridge",
+          "score": 0,
+          "time": 279,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1562,
+          "phase": "rescue",
+          "routine": "walk",
+          "score": 0,
+          "time": 279,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        },
+        {
+          "tick": 1702,
+          "phase": "rescue",
+          "routine": "dialog",
+          "score": 0,
+          "time": 279,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        }
+      ]
+    },
+    {
+      "stage": "7-4",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "02ccd3010054270fc801eac7b42c210ecb44f4b4c302ee98f404612e9b5ff831",
+      "zoneOrder": [
+        0
+      ],
+      "endingTick": 1733,
+      "finalStage": "8-1",
+      "finalPhase": "countdown",
+      "finalScore": 0,
+      "cutsceneFrames": 840,
+      "timeline": [
+        {
+          "tick": 1733,
+          "phase": "bridge",
+          "routine": "bridge",
+          "score": 0,
+          "time": 374,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 1873,
+          "phase": "rescue",
+          "routine": "walk",
+          "score": 0,
+          "time": 374,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        },
+        {
+          "tick": 2013,
+          "phase": "rescue",
+          "routine": "dialog",
+          "score": 0,
+          "time": 374,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        }
+      ]
+    },
+    {
+      "stage": "8-4",
+      "seed": 1,
+      "normalSpawn": true,
+      "inputsOnly": true,
+      "startingLives": 3,
+      "endingLives": 3,
+      "routeSha256": "f4ad4eb5b307957452093b5c8f96a96c4c9401ffd7319da3489db428f3d7486a",
+      "zoneOrder": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "endingTick": 2437,
+      "finalStage": "8-4",
+      "finalPhase": "won",
+      "finalScore": 500,
+      "cutsceneFrames": 980,
+      "timeline": [
+        {
+          "tick": 2437,
+          "phase": "bridge",
+          "routine": "bridge",
+          "score": 500,
+          "time": 362,
+          "dialogLines": 0,
+          "removedBridgeSegments": 0
+        },
+        {
+          "tick": 2577,
+          "phase": "rescue",
+          "routine": "walk",
+          "score": 500,
+          "time": 362,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        },
+        {
+          "tick": 2717,
+          "phase": "rescue",
+          "routine": "dialog",
+          "score": 500,
+          "time": 362,
+          "dialogLines": 0,
+          "removedBridgeSegments": 52
+        }
+      ]
+    }
+  ],
+  "fixtureCoverage": "All 32 endings, source transport graph, firework scoring, pipe/vine/warp routes, swimming, both branching mazes, scale carrying and new enemies are checked separately in tests. Fixture coverage is not claimed as natural completion of 32 courses.",
+  "physics": "Shared 60 Hz browser/server runtime; horizontal acceleration, drag, braking and jump acceleration use the pinned source formula/values. Collision handling, cooperative life/checkpoint rules, clock and network prediction/interpolation are browser-port adaptations; no claim of ROM frame equivalence."
+}

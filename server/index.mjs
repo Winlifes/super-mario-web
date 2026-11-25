@@ -12,6 +12,11 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 import { WebSocketServer, WebSocket } from "ws";
 import { createWorld, addPlayer, stepWorld, snapshot } from "./world.mjs";
 import { publicLevel, stages } from "../shared/level.mjs";
+import {
+  INPUT_PROTOCOL,
+  acceptInputFrames,
+  consumeInputFrame,
+} from "../shared/prediction.mjs";
 import { normalizeAssetBase, assetCsp } from "../shared/asset-config.mjs";
 
 const root = fileURLToPath(new URL("../dist/", import.meta.url));
@@ -256,9 +261,29 @@ export function createGameServer(options = {}) {
     if (message.type === "state" && ws.bufferedAmount > 32768) return;
     ws.send(JSON.stringify(message));
   };
+  const sendState = (room, player, message) => {
+    const body = room.world?.players.get(player.id);
+    send(
+      player.socket,
+      body && player.protocol === INPUT_PROTOCOL
+        ? {
+            ...message,
+            prediction: {
+              protocol: INPUT_PROTOCOL,
+              ack: player.appliedSeq,
+              player: body,
+              movers: room.world.movers,
+            },
+          }
+        : message,
+    );
+  };
   const notify = (room, message) => {
     for (const player of room.players.values())
-      if (player.connected) send(player.socket, message);
+      if (player.connected) {
+        if (message.type === "state") sendState(room, player, message);
+        else send(player.socket, message);
+      }
   };
   const roomView = (room) => ({
     type: "room",
@@ -353,6 +378,10 @@ export function createGameServer(options = {}) {
           player.input = neutral();
           player.inputAt = Date.now();
           player.lastSeq = -1;
+          player.appliedSeq = -1;
+          player.inputQueue = [];
+          player.protocol =
+            message.protocol === INPUT_PROTOCOL ? INPUT_PROTOCOL : 1;
           if (old && old !== ws) old.close(1000, "Reconnected elsewhere");
           if (room.world?.players.has(player.id))
             room.world.players.get(player.id).connected = true;
@@ -444,6 +473,9 @@ export function createGameServer(options = {}) {
             input: neutral(),
             inputAt: Date.now(),
             lastSeq: -1,
+            appliedSeq: -1,
+            inputQueue: [],
+            protocol: message.protocol === INPUT_PROTOCOL ? INPUT_PROTOCOL : 1,
           };
           room.players.set(player.id, player);
           if (!room.hostId) room.hostId = player.id;
@@ -456,6 +488,7 @@ export function createGameServer(options = {}) {
           token: player.token,
           code: room.code,
           resumed: !!previous,
+          protocol: player.protocol,
         });
         if (room.world) {
           send(ws, {
@@ -464,13 +497,22 @@ export function createGameServer(options = {}) {
             round: room.round,
             revision: room.world.revision,
           });
-          send(ws, snapshot(room.world));
+          sendState(room, player, snapshot(room.world));
         }
         broadcastRoom(room);
         return;
       }
       room.updatedAt = Date.now();
-      if (message.type === "input") {
+      if (
+        message.type === "input-frames" &&
+        player.protocol === INPUT_PROTOCOL
+      ) {
+        if (acceptInputFrames(player, message.frames))
+          player.inputAt = Date.now();
+      } else if (
+        message.type === "input" &&
+        player.protocol !== INPUT_PROTOCOL
+      ) {
         if (!Number.isSafeInteger(message.seq) || message.seq <= player.lastSeq)
           return;
         if (
@@ -511,6 +553,8 @@ export function createGameServer(options = {}) {
         });
         for (const p of members) {
           p.input = neutral();
+          p.inputQueue = [];
+          p.appliedSeq = p.lastSeq;
           addPlayer(room.world, p.id, p.slot);
         }
         notify(room, {
@@ -547,6 +591,7 @@ export function createGameServer(options = {}) {
       player.connected = false;
       player.leftAt = Date.now();
       player.input = neutral();
+      player.inputQueue = [];
       if (room.world?.players.has(player.id))
         room.world.players.get(player.id).connected = false;
       chooseHost(room);
@@ -570,13 +615,29 @@ export function createGameServer(options = {}) {
         const inputs = new Map(
           [...room.players.values()].map((p) => [
             p.id,
-            Date.now() - p.inputAt < 400 ? p.input : neutral(),
+            p.protocol === INPUT_PROTOCOL
+              ? consumeInputFrame(p, Date.now())
+              : Date.now() - p.inputAt < 400
+                ? p.input
+                : neutral(),
           ]),
         );
+        for (const player of room.players.values()) {
+          const body = room.world.players.get(player.id);
+          if (body)
+            body.commandSeq =
+              player.protocol === INPUT_PROTOCOL
+                ? player.appliedSeq
+                : player.lastSeq;
+        }
         const revision = room.world.revision;
         stepWorld(room.world, inputs);
         if (room.world.revision !== revision) {
-          for (const p of room.players.values()) p.input = neutral();
+          for (const p of room.players.values()) {
+            p.input = neutral();
+            p.inputQueue = [];
+            p.appliedSeq = p.lastSeq;
+          }
           notify(room, {
             type: "start",
             level: publicLevel(room.world.level),
@@ -585,7 +646,7 @@ export function createGameServer(options = {}) {
           });
         }
       }
-      if (++broadcastTick % 5 === 0) {
+      if (++broadcastTick % 3 === 0) {
         for (const room of rooms.values())
           if (room.world) notify(room, snapshot(room.world));
       }

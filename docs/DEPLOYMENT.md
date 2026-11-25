@@ -35,14 +35,14 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 
 运行包必须包含 `dist/`、`server/`、`shared/`、`data/`、`node_modules/ws/`、package 文件、LICENSE 和 THIRD_PARTY_NOTICES.md。`data/campaign.json`、`campaign-patterns.json`、`campaign-sprites.json` 和 `campaign-corrections.json` 由服务端加载，不能遗漏。
 
-`/api/lobby` 返回公开房间摘要，不返回重连令牌或私密房间码。公开房间仅在等待且有席位时可加入；快速加入会寻找空房，找不到则创建公开房间。私密房间仍通过邀请链接/房间码加入。单人房为私密且最多1人。
+`/api/lobby` 返回公开房间摘要，不返回重连令牌或私密房间码。公开房间仅在等待且有席位时可加入；快速加入会寻找空房，找不到则创建公开房间。私密房间仍通过邀请链接/房间码加入。网页单人连续闯关在浏览器本地运行，不创建房间；服务端保留旧客户端的私密单人房协议兼容。
 
 固定关卡数据和实现差异见 `docs/SOURCE_AUDIT.md`。服务器换关时广播新的地图版本，所有玩家使用同一阶段；奖励房允许队友分区游玩，共享金币和砖块状态。
 
 
 ## OSS 资源分发
 
-当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-campaign-v1/`。图片、字体、音频、游戏脚本和运行库从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-controls-v2/`。图片、字体、音频、游戏脚本和运行库从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
 
 构建与校验：
 

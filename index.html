@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="assets/css/multiplayer.css" />
     <script src="javascript/assets.js"></script>
     <script src="javascript/campaign-assets.js"></script>
+    <script src="javascript/runtime.js"></script>
     <script src="vendor/phaser-3.55.2.min.js"></script>
     <script src="vendor/html2canvas-1.4.1.min.js"></script>
   </head>
@@ -149,6 +150,7 @@
         <span id="connection-state">已连接</span
         ><button id="mute-button" class="small" aria-pressed="false">
           声音开</button
+        ><button id="pause-button" class="small" hidden>暂停</button
         ><button id="leave-game" class="small">退出房间</button>
       </div>
       <p id="team-members"></p>

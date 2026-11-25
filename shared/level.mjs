@@ -1,11 +1,9 @@
-import { readFileSync } from "node:fs";
+import sourceMaps from "../data/campaign.json" with { type: "json" };
+import corrections from "../data/campaign-corrections.json" with { type: "json" };
+import patterns from "../data/campaign-patterns.json" with { type: "json" };
+import spriteMetadata from "../data/campaign-sprites.json" with { type: "json" };
 import { makeLevel as meadow } from "./meadow.mjs";
-const maps = JSON.parse(
-  readFileSync(new URL("../data/campaign.json", import.meta.url)),
-);
-const corrections = JSON.parse(
-  readFileSync(new URL("../data/campaign-corrections.json", import.meta.url)),
-);
+const maps = structuredClone(sourceMaps);
 for (const correction of corrections) {
   const command = maps[correction.stage].areas[correction.area].creation.find(
     (c) => c.thing === correction.thing && c.x === correction.x,
@@ -17,19 +15,12 @@ for (const correction of corrections) {
     throw new Error("Source correction no longer applies");
   Object.assign(command, correction.set);
 }
-const patterns = JSON.parse(
-  readFileSync(new URL("../data/campaign-patterns.json", import.meta.url)),
-);
 export const stages = Object.freeze(
   Array.from({ length: 8 }, (_, w) =>
     Array.from({ length: 4 }, (_, s) => `${w + 1}-${s + 1}`),
   ).flat(),
 );
-const spriteSizes = Object.fromEntries(
-  JSON.parse(
-    readFileSync(new URL("../data/campaign-sprites.json", import.meta.url)),
-  ).map((s) => [s.name, s]),
-);
+const spriteSizes = Object.fromEntries(spriteMetadata.map((s) => [s.name, s]));
 const FLOOR = 208,
   SECTION_WIDTH = 160;
 const scenery = new Set([

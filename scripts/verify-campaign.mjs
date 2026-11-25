@@ -87,7 +87,7 @@ const proof = {
   fixtureCoverage:
     "All 32 endings, source transport graph, firework scoring, pipe/vine/warp routes, swimming, both branching mazes, scale carrying and new enemies are checked separately in tests. Fixture coverage is not claimed as natural completion of 32 courses.",
   physics:
-    "60 Hz server port; jump acceleration and run cap now use the pinned source formula/values. Collision handling, cooperative life/checkpoint rules, clock and network interpolation are browser-port adaptations; no claim of ROM frame equivalence.",
+    "Shared 60 Hz browser/server runtime; horizontal acceleration, drag, braking and jump acceleration use the pinned source formula/values. Collision handling, cooperative life/checkpoint rules, clock and network prediction/interpolation are browser-port adaptations; no claim of ROM frame equivalence.",
 };
 writeFileSync(
   process.argv[2] || "docs/verification-campaign-2026-11-24.json",

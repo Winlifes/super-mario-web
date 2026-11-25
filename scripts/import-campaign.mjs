@@ -272,6 +272,7 @@ const sprites = [
   ...["normal", "large", "fiery"].flatMap((form, i) => {
     const p = C.Player.normal[form].normal;
     return [
+      sprite(`player-skid-${i}`, 16, [p.running.skidding]),
       sprite(`player-climb-${i}`, 16, [p.climbing.normal, p.climbing.two]),
       sprite(`player-swim-${i}`, 16, [
         p.paddling.normal.paddle1,

@@ -384,6 +384,12 @@
     "frames": 1
   },
   {
+    "name": "player-skid-0",
+    "width": 16,
+    "height": 16,
+    "frames": 1
+  },
+  {
     "name": "player-climb-0",
     "width": 16,
     "height": 16,
@@ -396,6 +402,12 @@
     "frames": 3
   },
   {
+    "name": "player-skid-1",
+    "width": 16,
+    "height": 32,
+    "frames": 1
+  },
+  {
     "name": "player-climb-1",
     "width": 16,
     "height": 32,
@@ -406,6 +418,12 @@
     "width": 16,
     "height": 32,
     "frames": 3
+  },
+  {
+    "name": "player-skid-2",
+    "width": 16,
+    "height": 32,
+    "frames": 1
   },
   {
     "name": "player-climb-2",

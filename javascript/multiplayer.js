@@ -29,6 +29,7 @@
   }
   const colors = ["#ff705e", "#73df95", "#ffd66e", "#9eb6ff"];
   const keyState = new Set();
+  const pressedActions = new Set();
   const touchState = new Map();
   const readStorage = (store, key) => {
     try {
@@ -43,6 +44,15 @@
     } catch {}
   };
   let socket, me, token, code, room, coopGame, scene, latestState, latestLevel;
+  let localMode = false,
+    localGame = null,
+    localPaused = false,
+    predictor = null;
+  let simulationAt = 0,
+    simulationAccumulator = 0,
+    lastFrameSent = 0;
+  const outgoingFrames = [];
+  const predictedJumpSounds = new Set();
   let round = 0,
     installedRound = -1,
     assetsReady = false,
@@ -79,11 +89,16 @@
     $("classic-mode").disabled = value;
   }
   function send(message) {
+    if (localMode) {
+      if (message.type === "again") beginLocalRound();
+      return;
+    }
     if (socket?.readyState === WebSocket.OPEN)
       socket.send(JSON.stringify(message));
   }
   function resetInput() {
     keyState.clear();
+    pressedActions.clear();
     touchState.clear();
     document
       .querySelectorAll("[data-control]")
@@ -101,14 +116,16 @@
       controls.includes("right");
     return {
       type: "input",
-      seq: ++seq,
+
       axis: Number(right) - Number(left),
       jump:
+        pressedActions.has("jump") ||
         keyState.has("Space") ||
         keyState.has("KeyW") ||
         keyState.has("ArrowUp") ||
         controls.includes("jump"),
       fire:
+        pressedActions.has("fire") ||
         keyState.has("KeyQ") ||
         keyState.has("KeyF") ||
         controls.includes("fire"),
@@ -123,6 +140,10 @@
     };
   }
   function renderRoom() {
+    if (localMode) {
+      if (assetsReady && !localGame) beginLocalRound();
+      return;
+    }
     if (!room) return;
     $("entry-panel").hidden = true;
     $("lobby").querySelector(".lobby-card").classList.add("in-room");
@@ -261,6 +282,7 @@
         token: resumeToken,
         name,
         solo,
+        protocol: MarioRuntime.INPUT_PROTOCOL,
         visibility: $("room-visibility").value,
         stage: $("stage-choice").value,
       }),
@@ -279,6 +301,10 @@
         retry = 0;
         reconnectAt = 0;
         seq = 0;
+        outgoingFrames.length = 0;
+        predictor = null;
+        simulationAccumulator = 0;
+        simulationAt = 0;
         busy(false);
         status(
           message.resumed ? "连接已恢复。" : "房间已连接，邀请朋友一起加入。",
@@ -310,6 +336,11 @@
         latestLevel = message.level;
         round = `${message.round}:${message.revision}`;
         latestState = null;
+        predictor = new MarioRuntime.PlayerPredictor(latestLevel, me);
+        outgoingFrames.length = 0;
+        simulationAccumulator = 0;
+        simulationAt = 0;
+        $("pause-button").hidden = true;
         $("lobby").hidden = true;
         $("game-toolbar").hidden = false;
         $("touch-controls").hidden = !matchMedia("(pointer:coarse)").matches;
@@ -317,7 +348,9 @@
         seenEvent = 0;
         if (scene) scene.installLevel(latestLevel, round);
       } else if (message.type === "state") {
-        latestState = { ...message, receivedAt: performance.now() };
+        const now = performance.now();
+        latestState = { ...message, receivedAt: now };
+        predictor?.reconcile(message, now);
       } else if (message.type === "pong") {
         $("connection-state").textContent =
           `已连接 · ${Math.max(0, Date.now() - message.at)} ms`;
@@ -334,6 +367,8 @@
       if (socket !== ws) return;
       busy(false);
       resetInput();
+      predictor = null;
+      outgoingFrames.length = 0;
       if (intentional) return;
       $("connection-state").textContent = "连接已断开";
       if (event.code === 1008 || !token || !code) {
@@ -408,9 +443,65 @@
     $("mute-button").setAttribute("aria-pressed", String(muted));
     if (scene) scene.sound.mute = muted;
   });
+  function beginLocalRound() {
+    localGame = MarioRuntime.createLocalGame(room.stage, 1);
+    latestLevel = localGame.level;
+    round = `local:${Date.now()}`;
+    latestState = { ...localGame.snapshot(), receivedAt: performance.now() };
+    installedRound = -1;
+    seenEvent = 0;
+    simulationAt = 0;
+    simulationAccumulator = 0;
+    localPaused = false;
+    resetInput();
+    $("lobby").hidden = true;
+    $("game-toolbar").hidden = false;
+    $("pause-button").hidden = false;
+    $("pause-button").textContent = "暂停";
+    $("touch-controls").hidden = !matchMedia("(pointer:coarse)").matches;
+    $("connection-state").textContent = "单人 · 本地运行";
+    if (scene) scene.installLevel(latestLevel, round);
+  }
+  function togglePause(force) {
+    if (
+      !localMode ||
+      !localGame ||
+      ["won", "lost"].includes(latestState?.phase)
+    )
+      return;
+    localPaused = typeof force === "boolean" ? force : !localPaused;
+    simulationAt = 0;
+    simulationAccumulator = 0;
+    resetInput();
+    $("pause-button").textContent = localPaused ? "继续" : "暂停";
+    if (localPaused) scene?.music?.pause();
+    else scene?.music?.resume();
+    if (scene) {
+      scene.time.paused = localPaused;
+      if (localPaused) scene.tweens.pauseAll();
+      else scene.tweens.resumeAll();
+    }
+    renderHud(latestState);
+  }
+  $("pause-button").addEventListener("click", () => togglePause());
   $("classic-mode").addEventListener("click", () => {
-    soloAuto = true;
-    connect("create", "", null, true);
+    if (connecting || socket?.readyState === WebSocket.OPEN) return;
+    localMode = true;
+    me = "local";
+    localGame = null;
+    predictor = null;
+    const name = $("nickname").value.trim().slice(0, 16) || "玩家";
+    writeStorage(localStorage, "coop-name", name);
+    room = {
+      mode: "solo",
+      stage: $("stage-choice").value,
+      hostId: me,
+      players: [{ id: me, name, slot: 0, connected: true, ready: true }],
+    };
+    busy(true);
+    status("正在准备单人资源…");
+    bootCoop();
+    if (assetsReady) beginLocalRound();
   });
   $("random-mode").addEventListener("click", () => {
     $("lobby").hidden = true;
@@ -422,6 +513,11 @@
     location.assign(location.pathname),
   );
   document.addEventListener("keydown", (event) => {
+    if (localMode && ["KeyP", "Escape"].includes(event.code) && !event.repeat) {
+      event.preventDefault();
+      togglePause();
+      return;
+    }
     if (event.code === "KeyB" && latestState?.phase === "won") {
       leave();
       return;
@@ -445,18 +541,24 @@
       ].includes(event.code)
     ) {
       event.preventDefault();
+      if (!event.repeat && ["Space", "KeyW", "ArrowUp"].includes(event.code))
+        pressedActions.add("jump");
+      if (!event.repeat && ["KeyQ", "KeyF"].includes(event.code))
+        pressedActions.add("fire");
       keyState.add(event.code);
     }
   });
   document.addEventListener("keyup", (event) => keyState.delete(event.code));
   window.addEventListener("blur", () => {
     resetInput();
-    send(input());
+    if (localMode) togglePause(true);
+    else flushControls(true);
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       resetInput();
-      send(input());
+      if (localMode) togglePause(true);
+      else flushControls(true);
     }
   });
   for (const button of document.querySelectorAll("[data-control]")) {
@@ -464,6 +566,8 @@
       event.preventDefault();
       button.setPointerCapture(event.pointerId);
       touchState.set(event.pointerId, button.dataset.control);
+      if (["jump", "fire"].includes(button.dataset.control))
+        pressedActions.add(button.dataset.control);
       button.classList.add("pressed");
     });
     for (const type of ["pointerup", "pointercancel", "lostpointercapture"])
@@ -473,12 +577,65 @@
       });
     button.addEventListener("contextmenu", (event) => event.preventDefault());
   }
+  function flushControls(neutralize = false) {
+    if (localMode || socket?.readyState !== WebSocket.OPEN) return;
+    if (neutralize) outgoingFrames.push({ ...input(), seq: ++seq });
+    if (outgoingFrames.length) {
+      send({ type: "input-frames", frames: outgoingFrames.splice(0, 6) });
+      lastFrameSent = performance.now();
+    }
+  }
+  function advanceSimulation(now) {
+    if (!simulationAt) simulationAt = now;
+    const elapsed = Math.min(100, Math.max(0, now - simulationAt));
+    simulationAt = now;
+    if (localMode && localPaused) {
+      simulationAccumulator = 0;
+      return;
+    }
+    simulationAccumulator += elapsed;
+    for (
+      let steps = 0;
+      simulationAccumulator >= 1000 / 60 && steps < 6;
+      steps++
+    ) {
+      simulationAccumulator -= 1000 / 60;
+      const control = input();
+      pressedActions.clear();
+      if (localMode && localGame) {
+        const revision = localGame.world.revision;
+        latestState = { ...localGame.step(control), receivedAt: now };
+        if (localGame.world.revision !== revision) {
+          latestLevel = localGame.level;
+          round = `local:${latestState.revision}`;
+          seenEvent = 0;
+          resetInput();
+        }
+      } else if (
+        latestState?.phase === "playing" &&
+        socket?.readyState === WebSocket.OPEN
+      ) {
+        const command = { ...control, seq: ++seq };
+        predictor?.step(command, now);
+        for (const effect of predictor?.effects.splice(0) || []) {
+          if (effect.type === "jump") {
+            predictedJumpSounds.add(effect.seq);
+            if (predictedJumpSounds.size > 128)
+              predictedJumpSounds.delete(
+                predictedJumpSounds.values().next().value,
+              );
+            if (scene && !muted)
+              scene.sound.play("coop-jump", { volume: 0.25 });
+          }
+        }
+        outgoingFrames.push(command);
+        if (outgoingFrames.length >= 2) flushControls();
+      }
+    }
+    if (outgoingFrames.length && now - lastFrameSent > 30) flushControls();
+  }
   setInterval(() => {
-    if (latestState && ["playing", "countdown"].includes(latestState.phase))
-      send(input());
-  }, 1000 / 30);
-  setInterval(() => {
-    if (me) send({ type: "ping", at: Date.now() });
+    if (me && !localMode) send({ type: "ping", at: Date.now() });
   }, 2500);
 
   // RENDERER
@@ -965,10 +1122,13 @@
                 : "coop-music";
       }
       update(time, delta) {
+        advanceSimulation(performance.now());
         const state = latestState;
         if (!state || !latestLevel) return;
         this.installLevel(latestLevel, round);
         if (!this.level) return;
+        if (localMode && localPaused) return;
+        if (localMode) time = (state.tick * 1000) / 60;
         const blend = 1 - Math.exp(-Math.min(delta, 100) / 38),
           frame = Math.floor(time / 120),
           zone = this.zone;
@@ -995,7 +1155,8 @@
         }
         for (const { h, sprites } of this.firebars) {
           const angle =
-            (state.tick + (performance.now() - state.receivedAt) * 0.06) *
+            (state.tick +
+              (localMode ? 0 : (performance.now() - state.receivedAt) * 0.06)) *
             0.025 *
             h.speed;
           sprites.forEach((s, i) =>
@@ -1037,7 +1198,11 @@
           ),
         );
         const ids = new Set();
-        for (const p of state.players) {
+        const predicted = predictor?.row(performance.now());
+        const renderPlayers = predicted
+          ? state.players.map((p) => (p[0] === me ? predicted : p))
+          : state.players;
+        for (const p of renderPlayers) {
           const [
             id,
             x,
@@ -1055,6 +1220,8 @@
             crouch,
             pose,
             deathAge,
+            bodyHeight,
+            skidding,
           ] = p;
           if (pzone !== zone) continue;
           ids.add(id);
@@ -1102,9 +1269,20 @@
             ? 4
             : Math.abs(vy) > 8
               ? 5
-              : Math.abs(vx) > 3
-                ? 1 + (frame % 3)
+              : Math.abs(vx) > 4.2
+                ? [1, 2, 3, 2][
+                    Math.floor(
+                      (localGame?.world.tick ||
+                        (id === me && predictor?.environment?.tick) ||
+                        state.tick) /
+                        (5 + Math.ceil(5.4 - Math.abs(vx) / 30)),
+                    ) % 4
+                  ]
                 : 0;
+          if (skidding && !crouch && pose !== "climb" && pose !== "swim") {
+            key = `coop-campaign-player-skid-${form}`;
+            f = 0;
+          }
           if (pose === "climb") {
             key = `coop-campaign-player-climb-${form}`;
             f = frame % 2;
@@ -1123,11 +1301,15 @@
             t = death ? Math.max(0, deathAge - 7) / 60 : 0,
             ty =
               y +
-              (form && !crouch ? 32 : 16) +
+              (bodyHeight ?? (form && !crouch ? 32 : 16)) +
               (death ? -168 * t + 225 * t * t : 0);
           s.setPosition(
-            Math.abs(s.x - tx) > 70 ? tx : Phaser.Math.Linear(s.x, tx, blend),
-            Math.abs(s.y - ty) > 70 ? ty : Phaser.Math.Linear(s.y, ty, blend),
+            localMode || (id === me && predicted) || Math.abs(s.x - tx) > 70
+              ? tx
+              : Phaser.Math.Linear(s.x, tx, blend),
+            localMode || (id === me && predicted) || Math.abs(s.y - ty) > 70
+              ? ty
+              : Phaser.Math.Linear(s.y, ty, blend),
           );
           s.setAlpha(!connected ? 0.35 : invincible && frame % 2 ? 0.35 : 1);
           if (star)
@@ -1270,7 +1452,7 @@
         if (self) this.cameras.main.centerOn(self.sprite.x + 35, 120);
 
         const own = state.players.find((p) => p[0] === me);
-        if (["playing", "countdown"].includes(state.phase))
+        if (!localPaused && ["playing", "countdown"].includes(state.phase))
           this.musicFor(own?.[12] ? "coop-star-music" : this.themeKey());
         else {
           this.music?.stop();
@@ -1344,6 +1526,11 @@
             if (
               !muted &&
               this.cache.audio.exists(soundKey) &&
+              !(
+                event.type === "jump" &&
+                event.playerId === me &&
+                predictedJumpSounds.has(event.inputSeq)
+              ) &&
               (event.playerId === me ||
                 !self ||
                 Math.abs(event.x - self.sprite.x) < 350)
@@ -1406,6 +1593,15 @@
         return `${member?.name || "玩家"}${p[0] === me ? "（你）" : ""} · ${p[9]}条命${!p[10] ? " · 重连中" : !p[7] ? (p[9] > 0 ? " · 复活中" : " · 观战") : p[11] !== own?.[11] ? " · 其他区域" : ""}`;
       })
       .join("　");
+    if (localMode && localPaused) {
+      $("round-message").hidden = false;
+      $("round-message").classList.remove("completed");
+      $("round-title").textContent = "已暂停";
+      $("round-detail").textContent = "点击继续或按 P / Esc 返回游戏。";
+      $("again-button").hidden = true;
+      $("world-select-button").hidden = true;
+      return;
+    }
     const ending = ["won", "lost"].includes(state.phase),
       transition = ["cleared", "bridge", "rescue", "warp"].includes(
         state.phase,
@@ -1435,6 +1631,9 @@
           ? `公主获救！团队分数 ${state.score}。可返回房间重玩，或按 B 重新选择世界。`
           : `团队分数 ${state.score}，共收集 ${state.coins} 枚金币。`;
       $("again-button").hidden = room?.hostId !== me;
+      $("again-button").textContent = localMode
+        ? "重新挑战本关"
+        : "返回房间，再来一局";
       $("world-select-button").hidden = state.phase !== "won";
     }
   }

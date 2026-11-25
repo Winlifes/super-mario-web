@@ -71,7 +71,9 @@ function rank(w, hint = 0) {
     hintScore =
       hint * 50000 -
       (aim && p.zone === (aim.zone || 0)
-        ? Math.abs(p.x - aim.x) + Math.abs(p.y - aim.y) * 2
+        ? Math.abs(p.x - aim.x) * 3 +
+          Math.abs(p.y - aim.y) * 3 +
+          (aim.maxSpeed ? Math.max(0, Math.abs(p.vx) - aim.maxSpeed) * 2 : 0)
         : 0);
   return (
     hintScore +
@@ -170,6 +172,13 @@ for (let iteration = 0; iteration < 650; iteration++) {
         p.zone === (aim.zone || 0) &&
         Math.abs(p.x - aim.x) < (aim.dx || 20) &&
         Math.abs(p.y - aim.y) < (aim.dy || 24) &&
+        (!aim.maxSpeed || Math.abs(p.vx) < aim.maxSpeed) &&
+        (!aim.platformNear ||
+          w.movers.some(
+            (m) =>
+              m.zone === p.zone &&
+              Math.abs(m.x - aim.platformNear.x) < aim.platformNear.tolerance,
+          )) &&
         (!aim.usedAt ||
           w.level.zones[p.zone].platforms.some(
             (t) =>

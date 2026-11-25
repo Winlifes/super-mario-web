@@ -106,7 +106,7 @@ test(
       actor = room.world.players.get(welcome.id);
     assert.ok(actor.x > 70 && actor.x < 160);
     assert.equal(room.world.score, 0);
-    await delay(1000);
+    await delay(1800);
     const stopped = actor.x;
     await delay(300);
     assert.ok(Math.abs(actor.x - stopped) < 1);
@@ -392,5 +392,86 @@ test(
     assert.equal(resumed.stage, "8-4");
     assert.equal(resumed.cutscene.startedAt, first.cutscene.startedAt);
     assert.ok(resumed.cutscene.removed >= first.cutscene.removed);
+  },
+);
+
+test(
+  "versioned input batches acknowledge simulated frames and expose no coordinate authority",
+  { timeout: 6000 },
+  async (t) => {
+    const app = createGameServer(),
+      address = await app.listen(0),
+      base = `http://127.0.0.1:${address.port}`,
+      clients = [];
+    t.after(async () => {
+      for (const c of clients) c.ws.terminate();
+      await app.close();
+    });
+    const c = await client(base, { mode: "create", solo: true, protocol: 2 });
+    clients.push(c);
+    const hello = await c.wait((m) => m.type === "welcome");
+    assert.equal(hello.protocol, 2);
+    c.send({ type: "ready", ready: true });
+    c.send({ type: "start" });
+    const state = await c.wait(
+      (m) =>
+        m.type === "state" &&
+        m.phase === "playing" &&
+        m.prediction?.player.ground,
+    );
+    assert.equal(state.prediction.player.id, hello.id);
+    assert.equal(state.prediction.protocol, 2);
+    const frames = Array.from({ length: 6 }, (_, i) => ({
+      seq: i + 1,
+      axis: 1,
+      jump: i === 0,
+      fire: false,
+      run: true,
+      down: false,
+      x: 999999,
+    }));
+    c.send({ type: "input-frames", frames });
+    const ack = await c.wait(
+      (m) => m.type === "state" && m.prediction?.ack === 6,
+    );
+    assert.ok(ack.players[0][1] < 100);
+    assert.ok(ack.players[0][2] < 192);
+    assert.ok(ack.tick >= state.tick + 6);
+    assert.ok(Math.abs(ack.prediction.player.x - ack.players[0][1]) <= 0.051);
+    const prior = c.messages.length;
+    c.send({
+      type: "input-frames",
+      frames: [{ ...frames[0], seq: 7, axis: 100 }],
+    });
+    await delay(90);
+    assert.ok(
+      c.messages
+        .slice(prior)
+        .filter((m) => m.type === "state")
+        .every((m) => m.prediction.ack === 6),
+    );
+    const token = hello.token;
+    c.ws.terminate();
+    await delay(30);
+    const restored = await client(base, {
+      mode: "join",
+      code: hello.code,
+      token,
+      protocol: 2,
+    });
+    clients.push(restored);
+    assert.equal(
+      (await restored.wait((m) => m.type === "welcome")).resumed,
+      true,
+    );
+    const reconnect = await restored.wait((m) => m.type === "state");
+    assert.equal(reconnect.prediction.ack, -1);
+    restored.send({
+      type: "input-frames",
+      frames: [
+        { seq: 1, axis: -1, jump: false, fire: false, run: false, down: false },
+      ],
+    });
+    await restored.wait((m) => m.type === "state" && m.prediction?.ack === 1);
   },
 );
