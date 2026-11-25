@@ -1,11 +1,11 @@
 {
   "stage": "1-1",
   "phase": "cleared",
-  "ticks": 1338,
+  "ticks": 1344,
   "x": 3166,
   "zone": 0,
   "lives": 3,
-  "score": 1000,
+  "score": 900,
   "route": [
     {
       "ticks": 88,
@@ -96,7 +96,7 @@
       "down": false
     },
     {
-      "ticks": 24,
+      "ticks": 8,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -104,7 +104,7 @@
       "down": false
     },
     {
-      "ticks": 80,
+      "ticks": 96,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -192,7 +192,7 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 32,
       "axis": 1,
       "jump": true,
       "run": true,
@@ -200,7 +200,7 @@
       "down": false
     },
     {
-      "ticks": 32,
+      "ticks": 24,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -208,8 +208,16 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 8,
       "axis": 0,
+      "jump": false,
+      "run": true,
+      "fire": false,
+      "down": false
+    },
+    {
+      "ticks": 8,
+      "axis": -1,
       "jump": false,
       "run": true,
       "fire": false,
@@ -272,7 +280,7 @@
       "down": false
     },
     {
-      "ticks": 16,
+      "ticks": 8,
       "axis": 1,
       "jump": false,
       "run": true,
@@ -282,7 +290,7 @@
     {
       "ticks": 8,
       "axis": 0,
-      "jump": true,
+      "jump": false,
       "run": true,
       "fire": false,
       "down": false
@@ -296,7 +304,7 @@
       "down": false
     },
     {
-      "ticks": 52,
+      "ticks": 58,
       "axis": 1,
       "jump": false,
       "run": true,

@@ -14,6 +14,7 @@ import {
   solids,
   moveBody as move,
   stepPlayerMotion,
+  setPlayerForm,
   playerRow,
 } from "./motion.mjs";
 const DT = 1 / 60,
@@ -183,19 +184,13 @@ function points(w, p, value, x, y) {
   emit(w, "score", x, y, p?.id || "", value, p?.zone || 0);
 }
 function life(w, p) {
+  if (!p.alive && p.lives === 0) p.respawnAt = w.tick + 120;
   p.lives = Math.min(99, p.lives + 1);
   emit(w, "oneup", p.x, p.y, p.id, 0, p.zone);
 }
 function combo(w, p, index, x, y) {
   if (index >= comboPoints.length) life(w, p);
   else points(w, p, comboPoints[index], x, y);
-}
-function form(p, value) {
-  const height = value ? 32 : 16;
-  p.y += p.h - height;
-  p.h = height;
-  p.form = value;
-  p.crouch = false;
 }
 function coin(w, p, x, y) {
   w.coins++;
@@ -297,6 +292,13 @@ function loseLife(w, p) {
   p.climbing = null;
   p.alive = false;
   p.vx = p.vy = 0;
+  p.ground = false;
+  p.riding = null;
+  p.jumping = false;
+  p.jumpLevel = 0;
+  p.stompCombo = 0;
+  p.springUntil = 0;
+  p.skidding = false;
   p.respawnAt = p.lives > 0 ? w.tick + 120 : 0;
   p.starUntil = 0;
   emit(w, "die", p.x, p.y, p.id, 0, p.zone);
@@ -304,13 +306,14 @@ function loseLife(w, p) {
 function hurt(w, p) {
   if (
     !p.alive ||
+    !p.connected ||
     p.transit ||
     w.tick < p.invincibleUntil ||
     w.tick < p.starUntil
   )
     return;
   if (p.form) {
-    form(p, 0);
+    setPlayerForm(w, p, 0);
     p.invincibleUntil = w.tick + 150;
     emit(w, "hurt", p.x, p.y, p.id, 0, p.zone);
   } else loseLife(w, p);
@@ -353,14 +356,24 @@ function finish(w, p) {
 }
 export function movePlatforms(w) {
   const riders = (m) =>
-    [...w.players.values()].filter((p) => p.alive && p.riding === m.id);
+    [...w.players.values()].filter(
+      (p) => p.alive && p.connected && !p.transit && p.riding === m.id,
+    );
   const old = new Map(w.movers.map((m) => [m.id, [m.x, m.y]])),
-    scales = new Set();
+    scales = new Set(),
+    wrapped = new Set();
   for (const m of w.movers) {
     if (m.mode === "loop") {
       m.y += m.speed * DT;
-      if (m.y > 240) m.y = -16;
-      if (m.y < -16) m.y = 240;
+      if (m.y > 240 || m.y < -16) {
+        m.y = m.y > 240 ? -16 : 240;
+        wrapped.add(m.id);
+        for (const p of w.players.values()) {
+          if (p.riding !== m.id) continue;
+          p.riding = null;
+          p.ground = false;
+        }
+      }
     } else if (["horizontal", "vertical"].includes(m.mode)) {
       const axis = m.mode === "vertical" ? "y" : "x";
       m[axis] += m.speed * DT;
@@ -404,7 +417,7 @@ export function movePlatforms(w) {
   for (const m of w.movers) {
     const [x, y] = old.get(m.id);
     m.dx = m.x - x;
-    m.dy = m.y - y;
+    m.dy = wrapped.has(m.id) ? 0 : m.y - y;
   }
 }
 function random(w) {
@@ -541,7 +554,7 @@ function kick(w, p, e) {
   points(w, p, 400, e.x, e.y);
   emit(w, "kick", e.x, e.y, p.id, 0, p.zone);
 }
-function enemyContact(w, e, p) {
+function enemyContact(w, e, p, previousFoot, previousEnemyTop) {
   if (
     !p.alive ||
     !p.connected ||
@@ -561,7 +574,7 @@ function enemyContact(w, e, p) {
   }
   const stomp =
     p.vy > 5 &&
-    p.y + p.h - e.y < 14 &&
+    previousFoot <= previousEnemyTop + 0.5 &&
     !zoneOf(w, p).underwater &&
     !["piranha", "bowser", "podoboo", "spiny", "spiny-egg"].includes(e.type);
   if (["koopa", "beetle"].includes(e.type) && e.state !== "walk") {
@@ -601,7 +614,7 @@ function enemyContact(w, e, p) {
     emit(w, "stomp", e.x, e.y, p.id, 0, p.zone);
   } else hurt(w, p);
 }
-function tickEnemies(w) {
+function tickEnemies(w, previousFeet) {
   for (const e of w.enemies) {
     if (e.dead) continue;
     const nearby = [...w.players.values()].filter(
@@ -617,13 +630,21 @@ function tickEnemies(w) {
       e.active = true;
       e.activeAt = w.tick;
     }
-    const age = w.tick - e.activeAt,
+    const previousTop = e.y,
+      age = w.tick - e.activeAt,
       target = nearby.sort(
         (a, b) => Math.abs(a.x - e.x) - Math.abs(b.x - e.x),
       )[0];
     if (e.type === "piranha") {
-      const phase = (w.tick + Math.floor(e.homeX)) % 300,
+      const pipeTick = w.tick + Math.floor(e.homeX),
+        cycle = Math.floor(pipeTick / 300),
+        phase = pipeTick % 300,
         near = nearby.some((p) => Math.abs(p.x - e.x) < 30);
+      if (e.pipeCycle !== cycle) {
+        e.pipeCycle = cycle;
+        e.skipRise = near;
+      }
+      if (near && phase < 60 && e.y >= e.pipeY) e.skipRise = true;
       const rise =
         phase < 60
           ? phase / 60
@@ -632,7 +653,7 @@ function tickEnemies(w) {
             : phase < 210
               ? (210 - phase) / 60
               : 0;
-      e.y = e.pipeY + 2 - (near && phase < 60 ? 0 : rise) * 26;
+      e.y = e.pipeY + 2 - (e.skipRise ? 0 : rise) * 26;
       e.hidden = e.y >= e.pipeY;
     } else if (e.type === "cheep") {
       if (e.flying) {
@@ -790,7 +811,9 @@ function tickEnemies(w) {
     }
     if ((e.y > 300 && e.type !== "podoboo") || (e.dynamic && w.tick >= e.until))
       e.dead = w.tick;
-    if (!e.hidden) for (const p of w.players.values()) enemyContact(w, e, p);
+    if (!e.hidden)
+      for (const p of w.players.values())
+        enemyContact(w, e, p, previousFeet.get(p.id), previousTop);
   }
   w.enemies = w.enemies.filter(
     (e) => !e.dynamic || !e.dead || w.tick - e.dead < 25,
@@ -839,7 +862,8 @@ export function stepWorld(w, inputs = new Map()) {
   }
   if (w.phase !== "playing") return;
   w.stageTick++;
-  if (![...w.players.values()].some((p) => p.autoEntrance))
+  const active = [...w.players.values()].filter((p) => p.connected && p.alive);
+  if (!active.length || active.some((p) => !p.autoEntrance))
     w.time = Math.max(0, w.time - DT);
   if (w.time <= 0) {
     w.phase = "lost";
@@ -852,13 +876,22 @@ export function stepWorld(w, inputs = new Map()) {
     v.y = Math.max(-64, v.y - 0.5);
     v.h = v.bottom - v.y;
     for (const p of w.players.values())
-      if (p.climbing === v.id) p.y += v.y - top;
+      if (p.connected && p.climbing === v.id) p.y += v.y - top;
   }
   spawners(w);
+  const previousFeet = new Map();
   for (const p of w.players.values()) {
+    if (!p.connected) {
+      if (p.riding) {
+        p.riding = null;
+        p.ground = false;
+      }
+      if (p.transit) p.transit.at++;
+      continue;
+    }
     if (!p.alive) {
-      if (p.respawnAt && w.tick >= p.respawnAt && p.connected) {
-        form(p, 0);
+      if (p.respawnAt && w.tick >= p.respawnAt) {
+        setPlayerForm(w, p, 0);
         p.zone = p.checkpointZone;
         p.x = p.checkpoint;
         p.y = p.checkpointY;
@@ -867,6 +900,7 @@ export function stepWorld(w, inputs = new Map()) {
         p.respawnAt = 0;
         p.invincibleUntil = w.tick + 180;
         p.riding = null;
+        p.lastJump = p.lastFire = false;
         p.pose = "idle";
         p.transit = null;
         p.climbing = null;
@@ -877,9 +911,7 @@ export function stepWorld(w, inputs = new Map()) {
     if (stepTransit(w, p)) continue;
     const input = p.autoEntrance
       ? { ...neutral, axis: 1 }
-      : p.connected
-        ? inputs.get(p.id) || neutral
-        : neutral;
+      : inputs.get(p.id) || neutral;
     const water = zoneOf(w, p).underwater;
     if (p.climbing) {
       const v = w.vines.find((v) => v.id === p.climbing);
@@ -911,6 +943,7 @@ export function stepWorld(w, inputs = new Map()) {
         }
     if (p.climbing) continue;
     p.pose = water ? "swim" : "idle";
+    previousFeet.set(p.id, p.y + p.h);
     stepPlayerMotion(w, p, input, {
       jump: () => emit(w, "jump", p.x, p.y, p.id, 0, p.zone),
       ceiling: (t) => hitBlock(w, p, t),
@@ -935,7 +968,7 @@ export function stepWorld(w, inputs = new Map()) {
         zone: p.zone,
         owner: p.id,
         x: p.x + 7,
-        y: p.y + 12,
+        y: p.y + Math.min(12, (p.h - 6) / 2),
         w: 6,
         h: 6,
         vx: p.facing * 260,
@@ -1003,13 +1036,15 @@ export function stepWorld(w, inputs = new Map()) {
       p.alive &&
       g?.type === "flag" &&
       p.x + p.w >= g.x &&
-      p.y + p.h > 55 &&
+      p.x < g.x + 8 &&
+      p.y + p.h > g.y &&
+      p.y < g.groundY &&
       w.phase === "playing"
     )
       finish(w, p);
   }
   if (w.phase !== "playing") return;
-  tickEnemies(w);
+  tickEnemies(w, previousFeet);
   for (const item of w.items) {
     if (item.type !== "flower") {
       item.vy = Math.min(480, item.vy + GRAVITY * DT);
@@ -1017,15 +1052,23 @@ export function stepWorld(w, inputs = new Map()) {
       if (item.type === "star" && item.ground) item.vy = -240;
     }
     for (const p of w.players.values()) {
-      if (!p.alive || item.used || p.zone !== item.zone || !overlap(p, item))
+      if (
+        !p.alive ||
+        !p.connected ||
+        p.transit ||
+        item.used ||
+        p.zone !== item.zone ||
+        !overlap(p, item)
+      )
         continue;
       if (item.type === "coin") {
-        if (!p.connected || p.transit || w.tick < item.collectAt) continue;
+        if (w.tick < item.collectAt) continue;
         coin(w, p, item.x + item.w / 2, item.y + item.h / 2);
       } else {
         if (item.type === "oneup") life(w, p);
         else if (item.type === "star") p.starUntil = w.tick + 560;
-        else form(p, item.type === "flower" ? 2 : Math.max(1, p.form));
+        else
+          setPlayerForm(w, p, item.type === "flower" ? 2 : Math.max(1, p.form));
         p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
         if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
         emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);

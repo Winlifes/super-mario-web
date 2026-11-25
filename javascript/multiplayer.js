@@ -1293,7 +1293,9 @@
             key = "coop-campaign-player-dead";
             f = 0;
           }
+          const compact = alive && crouch && bodyHeight < 22;
           s.setTexture(key, f)
+            .setScale(1, compact ? bodyHeight / 22 : 1)
             .setFlipX(facing < 0)
             .setVisible((Boolean(alive) && pose !== "hidden") || death)
             .setDepth(pose === "pipe" ? 1 : 5);

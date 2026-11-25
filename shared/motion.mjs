@@ -1,5 +1,8 @@
 // The same 60 Hz kinematics and tile collisions run locally, in prediction and on the server.
 export const DT = 1 / 60;
+const SMALL_HEIGHT = 16,
+  STANDING_HEIGHT = 32,
+  CROUCH_HEIGHT = 22;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export const overlap = (a, b) =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
@@ -62,13 +65,30 @@ export function moveBody(w, b, dt, onCeiling = null) {
   }
   return wall;
 }
+function resizePlayer(w, p, height) {
+  if (p.h === height) return true;
+  const body = { ...p, y: p.y + p.h - height, h: height };
+  if (height > p.h && solids(w, body).some((tile) => overlap(body, tile)))
+    return false;
+  p.y = body.y;
+  p.h = height;
+  return true;
+}
+export function setPlayerForm(w, p, form) {
+  p.form = form;
+  if (form) {
+    if (!resizePlayer(w, p, STANDING_HEIGHT)) resizePlayer(w, p, CROUCH_HEIGHT);
+  } else resizePlayer(w, p, SMALL_HEIGHT);
+  p.crouch = Boolean(form && p.h < STANDING_HEIGHT);
+}
 // Pinned source: settings/math.js decreasePlayerRunningXvel. Source velocity *30 = px/s.
-export function stepHorizontal(p, input, water = false) {
+export function stepHorizontal(p, input, water = false, crawl = false) {
   let velocity = p.vx / 30,
     deceleration;
-  if (input.axis && !p.crouch) {
+  if (input.axis && (!p.crouch || crawl)) {
     velocity =
-      (velocity + input.axis * 0.098 * (1 + Number(input.run && !water))) *
+      (velocity +
+        input.axis * 0.098 * (1 + Number(input.run && !water && !crawl))) *
       0.98;
     deceleration = 0.0007;
   } else {
@@ -81,33 +101,24 @@ export function stepHorizontal(p, input, water = false) {
       : velocity < -deceleration
         ? velocity + deceleration
         : 0;
-  p.vx = clamp(velocity, -5.4, 5.4) * 30;
+  const limit = crawl ? 2.1 : 5.4;
+  p.vx = clamp(velocity, -limit, limit) * 30;
   p.skidding = Boolean(input.axis && !p.crouch && p.vx * input.axis < 0);
   if ((p.ground || water) && Math.abs(p.vx) > 4.2) p.facing = Math.sign(p.vx);
 }
 export function stepPlayerMotion(w, p, input, events = {}) {
   const water = !!zoneOf(w, p).underwater;
-  if (p.form) {
-    const wants = Boolean(input.down && p.ground && !water);
-    if (wants && !p.crouch) {
-      p.y += p.h - 22;
-      p.h = 22;
-      p.crouch = true;
-    } else if (!wants && p.crouch) {
-      const expanded = { ...p, y: p.y + p.h - 32, h: 32 };
-      if (!solids(w, expanded).some((t) => overlap(expanded, t))) {
-        p.y = expanded.y;
-        p.h = 32;
-        p.crouch = false;
-      }
-    }
-  }
   const carrying = w.movers.find((m) => m.id === p.riding);
   if (carrying) {
     p.x += carrying.dx;
     p.y += carrying.dy;
   }
-  stepHorizontal(p, input, water);
+  const wantsCrouch = Boolean(p.form && input.down && p.ground && !water);
+  if (p.form) {
+    resizePlayer(w, p, wantsCrouch ? CROUCH_HEIGHT : STANDING_HEIGHT);
+    p.crouch = p.h < STANDING_HEIGHT;
+  }
+  stepHorizontal(p, input, water, p.crouch && !wantsCrouch);
   if (input.jump && !p.lastJump && (p.ground || water)) {
     p.vy = water ? -115 : -864 * DT;
     p.jumpLevel = 0;

@@ -1,10 +1,12 @@
 import { emit } from "./events.mjs";
+import { setPlayerForm } from "./motion.mjs";
 const DT = 1 / 60;
 const score = (w, value, p) => {
   w.score += value;
   emit(w, "score", p.x, p.y, p.id, value, p.zone);
 };
 function gather(w, p) {
+  const feet = p.y + p.h;
   for (const q of w.players.values()) {
     q.vx = q.vy = 0;
     q.transit = null;
@@ -12,10 +14,10 @@ function gather(w, p) {
     q.pose = "idle";
     q.crouch = false;
     q.h = q.form ? 32 : 16;
+    if (q.alive) q.y = feet - q.h;
     if (q !== p && q.alive) {
       q.zone = p.zone;
       q.x = p.x - 18 * (q.slot + 1);
-      q.y = p.y + p.h - q.h;
     }
   }
   w.bullets = [];
@@ -273,6 +275,8 @@ export function startTransit(w, p, target, direction = "down") {
   };
   p.vx = p.vy = 0;
   p.pose = "pipe";
+  p.ground = false;
+  p.riding = null;
   p.climbing = null;
   emit(w, "pipe", p.x, p.y, p.id, 0, p.zone);
   return true;
@@ -282,15 +286,20 @@ export function travelTo(w, p, target, emerge = true) {
   if (!to) return;
   p.zone = to.zone;
   p.x = to.x;
-  p.y = to.y - (p.form ? 16 : 0);
+  p.y = to.entry === "Normal" ? 16 : to.y;
+  p.h = 16;
+  setPlayerForm(w, p, p.form);
   p.vx = p.vy = 0;
   p.ground = false;
   p.riding = null;
   p.climbing = null;
+  p.jumping = false;
+  p.jumpLevel = 0;
+  p.springUntil = 0;
   p.portalAt = w.tick + 90;
   p.invincibleUntil = w.tick + 120;
   p.checkpoint = p.x;
-  p.checkpointY = p.y;
+  p.checkpointY = to.y;
   p.checkpointZone = p.zone;
   p.autoEntrance = false;
   if (emerge && to.entry === "PipeVertical") {
@@ -307,7 +316,6 @@ export function travelTo(w, p, target, emerge = true) {
   } else {
     p.transit = null;
     p.pose = "idle";
-    if (to.entry === "Normal") p.y = 16 - (p.form ? 16 : 0);
   }
 }
 export function stepTransit(w, p) {
@@ -324,7 +332,7 @@ export function stepTransit(w, p) {
       p.pose = "idle";
     }
   } else if (t.phase === "vine") {
-    p.y = Math.max(176 - (p.form ? 16 : 0), p.y - 0.5);
+    p.y = Math.max(192 - p.h, p.y - 0.5);
     if (w.tick - t.at >= 145) {
       p.transit = null;
       p.pose = "idle";
