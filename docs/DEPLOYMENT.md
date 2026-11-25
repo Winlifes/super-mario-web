@@ -42,7 +42,7 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 
 ## OSS 资源分发
 
-当前使用北京的 `mac-cat` bucket。图片、字体和音频从 `mario/20261124-controls-v2/` 读取，JavaScript 从 `mario/20261125-block-reward-v1/` 读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+当前使用北京的 `mac-cat` bucket。图片、字体和音频从 `mario/20261124-controls-v2/` 读取，JavaScript 从 `mario/20261125-retry-v1/` 读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
 
 构建与校验：
 

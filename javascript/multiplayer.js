@@ -1611,15 +1611,22 @@
       return;
     }
     const ending = ["won", "lost"].includes(state.phase),
+      timedOut = state.phase === "timeout",
       transition = ["cleared", "bridge", "rescue", "warp"].includes(
         state.phase,
       );
-    $("round-message").hidden = state.phase !== "countdown" && !ending;
+    $("round-message").hidden =
+      state.phase !== "countdown" && !timedOut && !ending;
     $("round-message").classList.toggle("completed", state.phase === "won");
     if (ending) $("touch-controls").hidden = true;
     $("again-button").hidden = true;
     $("world-select-button").hidden = true;
-    if (state.phase === "countdown") {
+    if (timedOut) {
+      resetInput();
+      $("round-title").textContent = "时间到";
+      $("round-detail").textContent =
+        `${Math.max(1, state.countdown)} 秒后继续闯关。`;
+    } else if (state.phase === "countdown") {
       $("round-title").textContent =
         `WORLD ${state.stage} · ${Math.max(1, state.countdown)}`;
       $("round-detail").textContent = state.stage.endsWith("-4")
@@ -1633,7 +1640,11 @@
     else if (ending) {
       resetInput();
       $("round-title").textContent =
-        state.phase === "won" ? "八大世界通关！" : "再试一次吧";
+        state.phase === "won"
+          ? "八大世界通关！"
+          : state.time <= 0
+            ? "时间到"
+            : "再试一次吧";
       $("round-detail").textContent =
         state.phase === "won"
           ? `公主获救！团队分数 ${state.score}。可返回房间重玩，或按 B 重新选择世界。`

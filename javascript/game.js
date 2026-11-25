@@ -912,6 +912,10 @@ function consumeMushroom(player, mushroom) {
 
 function consumeFireflower(player, fireFlower) {
     if (gameOver || gameWinned) return;
+    if (playerState === 0) {
+        consumeMushroom.call(this, player, fireFlower);
+        return;
+    }
 
     this.consumePowerUpSound.play();
     addToScore.call(this, 1000, fireFlower);
@@ -919,8 +923,6 @@ function consumeFireflower(player, fireFlower) {
 
     if (playerState > 1 )
     return;
-
-    let anim = playerState > 0 ? 'grown-mario-idle' : 'idle';
 
     playerBlocked = true;
     this.anims.pauseAll();
@@ -930,7 +932,7 @@ function consumeFireflower(player, fireFlower) {
     let i = 0;
     let interval = setInterval(() => {
         i++;
-        player.anims.play(i % 2 === 0 ? 'fire-mario-idle' : anim);
+        player.anims.play(i % 2 === 0 ? 'fire-mario-idle' : 'grown-mario-idle');
         if (i > 5) {
             clearInterval(interval);
             player.clearTint();

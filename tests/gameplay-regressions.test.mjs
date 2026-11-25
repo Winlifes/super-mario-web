@@ -70,6 +70,144 @@ test("power-ups fit under low ceilings and the powered player can crawl out", ()
   }
 });
 
+test("a fire flower grows a small player before enabling fire shots", () => {
+  const { world, player } = playground();
+  for (const form of [1, 2, 2]) {
+    world.items.push({
+      id: `flower-${world.tick}`,
+      type: "flower",
+      zone: 0,
+      x: player.x,
+      y: player.y,
+      w: 14,
+      h: 16,
+    });
+    stepWorld(world);
+    assert.equal(player.form, form);
+    assert.equal(world.items.length, 0);
+  }
+  assert.equal(world.score, 3000);
+});
+
+test("a timeout costs one life, resumes at the checkpoint and ends on the last life", () => {
+  const { world, player } = playground();
+  Object.assign(player, { lives: 2, checkpoint: 80, form: 2, h: 32 });
+  world.time = 0.01;
+  world.coins = 8;
+  world.score = 1600;
+  stepWorld(world);
+  assert.equal(world.phase, "timeout");
+  assert.equal(world.time, 0);
+  assert.equal(player.lives, 1);
+  assert.equal(player.alive, false);
+
+  for (let i = 0; i < 119; i++) stepWorld(world);
+  assert.equal(world.phase, "timeout");
+  assert.equal(player.alive, false);
+  assert.equal(player.lives, 1);
+  stepWorld(world);
+  assert.equal(world.phase, "playing");
+  assert.equal(world.time, 300);
+  assert.equal(player.x, player.checkpoint);
+  assert.equal(player.alive, true);
+  assert.equal(player.form, 0);
+  assert.equal(world.coins, 8);
+  assert.equal(world.score, 1600);
+
+  world.time = 0.01;
+  stepWorld(world);
+  assert.equal(world.phase, "lost");
+  assert.equal(player.lives, 0);
+  assert.equal(player.alive, false);
+});
+
+test("a team timeout charges each active player once and preserves offline and pending lives", () => {
+  const { world, player } = playground();
+  const teammate = addPlayer(world, "b", 1);
+  const offline = addPlayer(world, "c", 2);
+  const waiting = addPlayer(world, "d", 3);
+  offline.connected = false;
+  Object.assign(waiting, { alive: false, lives: 2, respawnAt: 50 });
+  world.time = 0.01;
+  stepWorld(world);
+  assert.equal(world.phase, "timeout");
+  assert.deepEqual([player, teammate, offline, waiting].map((p) => p.lives), [
+    2, 2, 3, 2,
+  ]);
+  for (let i = 0; i < 120; i++) stepWorld(world);
+  assert.equal(world.phase, "playing");
+  assert.equal(world.time, 300);
+  assert.equal(offline.connected, false);
+  assert.ok([player, teammate, offline, waiting].every((p) => p.alive));
+  assert.deepEqual([player, teammate, offline, waiting].map((p) => p.lives), [
+    2, 2, 3, 2,
+  ]);
+  assert.equal(world.events.filter((e) => e.type === "timeup").length, 1);
+});
+
+test("a new attempt starts with a fresh timer and maze route after a solo death", () => {
+  const { world, player } = playground();
+  world.time = 25;
+  Object.assign(player, {
+    y: 280,
+    mazePassed: true,
+    mazeSection: 2,
+    mazeAt: 30,
+    mazeTrigger: "route",
+  });
+  stepWorld(world);
+  const pausedTime = world.time;
+  for (let i = 0; i < 60; i++) stepWorld(world);
+  assert.equal(world.time, pausedTime);
+  for (let i = 0; i < 60; i++) stepWorld(world);
+  assert.equal(player.alive, true);
+  assert.equal(world.time, 300);
+  assert.equal(player.mazePassed, false);
+  assert.equal(player.mazeSection, 0);
+  assert.equal(player.mazeAt, 0);
+  assert.equal(player.mazeTrigger, null);
+});
+
+test("a reserved reconnect keeps the run available after the last online life is lost", () => {
+  const { world, player } = playground();
+  const peer = addPlayer(world, "b", 1);
+  player.connected = false;
+  Object.assign(peer, { lives: 1, y: 280 });
+  stepWorld(world);
+  assert.equal(peer.lives, 0);
+  assert.equal(world.phase, "playing");
+  const time = world.time;
+  stepWorld(world);
+  assert.equal(world.time, time);
+  player.connected = true;
+  stepWorld(world, control(1));
+  assert.equal(world.phase, "playing");
+  assert.ok(player.x > 100);
+  assert.ok(world.time < time);
+});
+
+test("changing stages keeps surviving power-ups and clears the form of a player awaiting respawn", () => {
+  const world = createWorld(1, { stage: "1-1" });
+  const fallen = addPlayer(world, "a", 0);
+  const leader = addPlayer(world, "b", 1);
+  world.phase = "playing";
+  world.enemies = [];
+  world.time = 10;
+  Object.assign(fallen, { form: 2, h: 32, y: 280 });
+  Object.assign(leader, { form: 1, h: 32, x: world.level.goal.x, y: 176 });
+  stepWorld(world);
+  assert.equal(fallen.alive, false);
+  assert.equal(world.phase, "cleared");
+  const revision = world.revision;
+  for (let i = 0; i < 1200 && world.revision === revision; i++) stepWorld(world);
+  assert.equal(world.level.stage, "1-2");
+  assert.equal(fallen.alive, true);
+  assert.equal(fallen.lives, 2);
+  assert.equal(fallen.form, 0);
+  assert.equal(fallen.h, 16);
+  assert.equal(leader.form, 1);
+});
+
 test("a loop platform releases its riders when it reenters from the other edge", () => {
   for (const [y, speed, wrappedY] of [
     [239, 120, -16],

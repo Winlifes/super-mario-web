@@ -19,7 +19,8 @@ import {
 } from "./motion.mjs";
 const DT = 1 / 60,
   GRAVITY = 900,
-  COIN_POP_TICKS = 30;
+  COIN_POP_TICKS = 30,
+  RESPAWN_TICKS = 120;
 const neutral = Object.freeze({
   axis: 0,
   jump: false,
@@ -32,13 +33,20 @@ const overlap = (a, b) =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const round = (n) => Math.round(n * 10) / 10;
 const zoneOf = (w, b) => w.level.zones[b.zone || 0];
+const stageDuration = (w) => w.level.time || 300;
 const comboPoints = [100, 200, 400, 500, 800, 1000, 2000, 4000, 8000];
 
+function resetMazeProgress(p) {
+  p.mazePassed = false;
+  p.mazeSection = 0;
+  p.mazeTrigger = null;
+  p.mazeAt = 0;
+}
 function installStage(w, stage) {
   w.level = makeLevel(w.seed, stage);
   w.events = [];
   w.revision++;
-  w.time = w.level.time || 300;
+  w.time = stageDuration(w);
   w.enemies = w.level.zones.flatMap((z) =>
     z.enemies.map((e) => ({
       ...e,
@@ -87,6 +95,7 @@ function installStage(w, stage) {
   w.phase = "countdown";
   for (const p of w.players.values()) {
     const s = w.level.zones[0].spawn;
+    if (!p.alive) p.form = 0;
     p.zone = 0;
     p.x = s.x + (stage.endsWith("-4") ? p.slot * 2 : p.slot * 22);
     p.y = s.y;
@@ -105,9 +114,7 @@ function installStage(w, stage) {
     p.transit = null;
     p.climbing = null;
     p.pose = "idle";
-    p.mazePassed = false;
-    p.mazeSection = 0;
-    p.mazeAt = 0;
+    resetMazeProgress(p);
     p.springUntil = 0;
     p.autoEntrance = w.level.entry === "Walking";
     p.starUntil = 0;
@@ -173,11 +180,10 @@ export function addPlayer(w, id, slot) {
     pose: "idle",
     transit: null,
     climbing: null,
-    mazePassed: false,
-    mazeAt: 0,
     springUntil: 0,
     autoEntrance: w.level.entry === "Walking",
   };
+  resetMazeProgress(p);
   w.players.set(id, p);
   return p;
 }
@@ -186,7 +192,7 @@ function points(w, p, value, x, y) {
   emit(w, "score", x, y, p?.id || "", value, p?.zone || 0);
 }
 function life(w, p) {
-  if (!p.alive && p.lives === 0) p.respawnAt = w.tick + 120;
+  if (!p.alive && p.lives === 0) p.respawnAt = w.tick + RESPAWN_TICKS;
   p.lives = Math.min(99, p.lives + 1);
   emit(w, "oneup", p.x, p.y, p.id, 0, p.zone);
 }
@@ -293,8 +299,9 @@ function loseLife(w, p) {
   p.stompCombo = 0;
   p.springUntil = 0;
   p.skidding = false;
-  p.respawnAt = p.lives > 0 ? w.tick + 120 : 0;
+  p.respawnAt = p.lives > 0 ? w.tick + RESPAWN_TICKS : 0;
   p.starUntil = 0;
+  resetMazeProgress(p);
   emit(w, "die", p.x, p.y, p.id, 0, p.zone);
 }
 function hurt(w, p) {
@@ -852,20 +859,30 @@ export function stepWorld(w, inputs = new Map()) {
     if (--w.countdown <= 0) w.phase = "playing";
     return;
   }
+  if (w.phase === "timeout") {
+    if (--w.countdown > 0) return;
+    w.time = stageDuration(w);
+    w.phase = "playing";
+  }
   if (["cleared", "bridge", "rescue", "warp"].includes(w.phase)) {
     stepCutscene(w, (stage) => advanceStage(w, stage), move);
     return;
   }
   if (w.phase !== "playing") return;
   w.stageTick++;
-  const active = [...w.players.values()].filter((p) => p.connected && p.alive);
-  if (!active.length || active.some((p) => !p.autoEntrance))
+  const players = [...w.players.values()];
+  const active = players.filter((p) => p.connected && p.alive);
+  if (active.some((p) => !p.autoEntrance))
     w.time = Math.max(0, w.time - DT);
-  if (w.time <= 0) {
-    w.phase = "lost";
+  if (w.time <= 0 && active.length) {
     emit(w, "timeup", 0, 0);
+    for (const p of active) loseLife(w, p);
+    const canRetry = players.some((p) => p.lives > 0);
+    w.phase = canRetry ? "timeout" : "lost";
+    w.countdown = canRetry ? RESPAWN_TICKS : 0;
     return;
   }
+  const everyoneDown = players.every((p) => !p.alive);
   movePlatforms(w);
   for (const v of w.vines) {
     const top = v.y;
@@ -887,6 +904,7 @@ export function stepWorld(w, inputs = new Map()) {
     }
     if (!p.alive) {
       if (p.respawnAt && w.tick >= p.respawnAt) {
+        if (everyoneDown) w.time = stageDuration(w);
         setPlayerForm(w, p, 0);
         p.zone = p.checkpointZone;
         p.x = p.checkpoint;
@@ -1059,8 +1077,10 @@ export function stepWorld(w, inputs = new Map()) {
         continue;
       if (item.type === "oneup") life(w, p);
       else if (item.type === "star") p.starUntil = w.tick + 560;
-      else
-        setPlayerForm(w, p, item.type === "flower" ? 2 : Math.max(1, p.form));
+      else {
+        const form = item.type === "flower" && p.form > 0 ? 2 : Math.max(1, p.form);
+        setPlayerForm(w, p, form);
+      }
       p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
       if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
       emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);
@@ -1121,8 +1141,7 @@ export function stepWorld(w, inputs = new Map()) {
       if (p.zone === h.zone && overlap(p, h)) hurt(w, p);
   }
   w.hammers = w.hammers.filter((h) => h.until > w.tick && h.y < 280);
-  const members = [...w.players.values()].filter((p) => p.connected);
-  if (members.length && members.every((p) => !p.alive && p.lives <= 0))
+  if (players.length && players.every((p) => p.lives <= 0))
     w.phase = "lost";
 }
 export function snapshot(w) {
