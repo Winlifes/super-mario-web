@@ -1386,16 +1386,22 @@
         this.updateEntities(
           this.items,
           state.items.filter((e) => e[4] === zone),
-          () => this.add.sprite(0, 0, "coop-mushroom").setOrigin(0).setDepth(4),
-          (s, e) => {
+          ([, x, y]) =>
+            this.add.sprite(x, y, "coop-mushroom").setOrigin(0).setDepth(4),
+          (s, [, x, y, type]) => {
             const key =
-              e[3] === "flower"
-                ? `flower${this.underground ? "-under" : ""}`
-                : e[3];
-            s.setTexture(
-              `coop-${key}`,
-              ["flower", "star"].includes(e[3]) ? frame % 4 : 0,
-            ).setPosition(e[1], e[2]);
+              type === "flower" && this.underground ? "flower-under" : type;
+            if (type === "coin") {
+              s.setTexture("coop-coin", Math.floor(time / 75) % 4).setPosition(
+                x,
+                localMode ? y : Phaser.Math.Linear(s.y, y, blend),
+              );
+            } else {
+              s.setTexture(
+                `coop-${key}`,
+                ["flower", "star"].includes(type) ? frame % 4 : 0,
+              ).setPosition(x, y);
+            }
           },
         );
         this.updateEntities(

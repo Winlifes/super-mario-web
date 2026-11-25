@@ -13,7 +13,10 @@ await Promise.all(
   Array.from({ length: 6 }, async () => {
     while (queue.length) {
       const item = queue.shift(),
-        url = new URL(item.path, manifest.baseURL);
+        baseURL =
+          (item.path.endsWith(".js") && manifest.scriptBaseURL) ||
+          manifest.baseURL,
+        url = new URL(item.path, baseURL);
       try {
         const response = await fetch(url, {
           headers: { Origin: origin },
@@ -57,6 +60,7 @@ const range =
   audio.status === 206 && (await audio.arrayBuffer()).byteLength === 1024;
 const report = {
   baseURL: manifest.baseURL,
+  scriptBaseURL: manifest.scriptBaseURL,
   origin,
   files: verified.length,
   bytes: verified.reduce((n, f) => n + f.bytes, 0),

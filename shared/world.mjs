@@ -204,6 +204,26 @@ function coin(w, p, x, y) {
     for (const member of w.players.values()) life(w, member);
   emit(w, "coin", x, y, p.id, 0, p.zone);
 }
+function releaseBlockCoin(w, tile) {
+  const item = {
+    id: `i${w.entityId++}`,
+    type: "coin",
+    zone: tile.zone,
+    x: tile.x + (tile.w - 16) / 2,
+    y: tile.y - 16,
+    w: 16,
+    h: 16,
+    vx: 0,
+    vy: -225,
+    collectAt: w.tick + 6,
+  };
+  // A stacked brick can block the exit above. Drop into the space the player hit from.
+  if (solids(w, item).some((solid) => overlap(item, solid))) {
+    item.y = tile.y + tile.h;
+    item.vy = 60;
+  }
+  w.items.push(item);
+}
 function hitBlock(w, p, t) {
   if (w.used.has(t.id) || w.broken.has(t.id)) return;
   const last = w.blockHits.get(t.id);
@@ -218,8 +238,7 @@ function hitBlock(w, p, t) {
     if (t.content !== "multi" || hit.count >= 10 || w.tick >= hit.until)
       w.used.add(t.id);
     emit(w, "bump", t.x, t.y, p.id, 0, p.zone);
-    if (t.content === "coin" || t.content === "multi")
-      coin(w, p, t.x, t.y - 16);
+    if (t.content === "coin" || t.content === "multi") releaseBlockCoin(w, t);
     else if (t.content === "vine") {
       w.vines.push({
         id: `v${w.entityId++}`,
@@ -997,16 +1016,23 @@ export function stepWorld(w, inputs = new Map()) {
       move(w, item, DT);
       if (item.type === "star" && item.ground) item.vy = -240;
     }
-    for (const p of w.players.values())
-      if (p.alive && !item.used && p.zone === item.zone && overlap(p, item)) {
+    for (const p of w.players.values()) {
+      if (!p.alive || item.used || p.zone !== item.zone || !overlap(p, item))
+        continue;
+      if (item.type === "coin") {
+        if (!p.connected || p.transit || w.tick < item.collectAt) continue;
+        coin(w, p, item.x + item.w / 2, item.y + item.h / 2);
+      } else {
         if (item.type === "oneup") life(w, p);
         else if (item.type === "star") p.starUntil = w.tick + 560;
         else form(p, item.type === "flower" ? 2 : Math.max(1, p.form));
         p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
-        item.used = true;
         if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
         emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);
       }
+      item.used = true;
+      break;
+    }
   }
   w.items = w.items.filter((i) => !i.used && i.y < 264);
   for (const b of w.bullets) {

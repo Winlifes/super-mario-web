@@ -410,6 +410,8 @@ function create() {
 
     createAnimations.call(this);
     createPlayer.call(this);
+    this.releasedCoins = this.physics.add.group({ allowGravity: false, immovable: true });
+    this.physics.add.overlap(player, this.releasedCoins, collectCoin, null, this);
     generateLevel.call(this);
     drawWorld.call(this);
     drawStartScreen.call(this);
@@ -949,7 +951,8 @@ function consumeFireflower(player, fireFlower) {
 
 function collectCoin(player, coin) {
     this.coinSound.play();
-    addToScore.call(this, 200);
+    addToScore.call(this, 200, coin);
+    this.tweens.killTweensOf(coin);
     coin.destroy();
 }
 

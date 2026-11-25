@@ -20,6 +20,16 @@ const output = path.resolve(
   process.env.BUILD_OUTPUT_DIR || path.join(root, "dist"),
 );
 const baseURL = normalizeAssetBase(process.env.ASSET_BASE_URL || "");
+const scriptBaseURL = normalizeAssetBase(
+  process.env.ASSET_SCRIPT_BASE_URL || "",
+);
+if (
+  scriptBaseURL &&
+  (!baseURL || new URL(scriptBaseURL).origin !== new URL(baseURL).origin)
+)
+  throw new Error(
+    "ASSET_SCRIPT_BASE_URL must share the ASSET_BASE_URL origin.",
+  );
 if (output === root || root.startsWith(output + path.sep))
   throw new Error("Build output cannot replace the source directory.");
 const walk = (directory) =>
@@ -121,8 +131,11 @@ html = html.replace(/(src|href)="([^"#]+)"/g, (_, attribute, value) => {
     return `${attribute}="${value}"`;
   const isStylesheet =
     filename.startsWith("assets/css/") && filename.endsWith(".css");
+  const resourceBase = (filename.endsWith(".js") && scriptBaseURL) || baseURL;
   const url =
-    baseURL && !isStylesheet ? new URL(filename, baseURL).href : value;
+    resourceBase && !isStylesheet
+      ? new URL(filename, resourceBase).href
+      : value;
   const version = /\.(?:js|css)$/.test(filename)
     ? `?v=${digest(path.join(output, filename)).slice(0, 12)}`
     : "";
@@ -130,7 +143,8 @@ html = html.replace(/(src|href)="([^"#]+)"/g, (_, attribute, value) => {
 });
 if (baseURL) {
   html = html.replace(/<(?:script|link|img)\b[^>]*>/g, (tag) =>
-    tag.includes(baseURL) && !tag.includes("crossorigin=")
+    (tag.includes(baseURL) || (scriptBaseURL && tag.includes(scriptBaseURL))) &&
+    !tag.includes("crossorigin=")
       ? tag.replace(/\s*\/?>$/, (ending) => ` crossorigin="anonymous"${ending}`)
       : tag,
   );
@@ -154,7 +168,16 @@ const resources = walk(output)
   }));
 writeFileSync(
   path.join(output, "asset-manifest.json"),
-  JSON.stringify({ version: 1, baseURL, files: resources }, null, 2) + "\n",
+  JSON.stringify(
+    {
+      version: 1,
+      baseURL,
+      scriptBaseURL: scriptBaseURL || undefined,
+      files: resources,
+    },
+    null,
+    2,
+  ) + "\n",
 );
 const files = walk(output);
 const bytes = files.reduce(

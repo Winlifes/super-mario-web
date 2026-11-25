@@ -90,3 +90,34 @@ test("the HTTP service exposes the configured OSS origin without redirecting lob
   assert.equal(lobby.status, 200);
   assert.deepEqual((await lobby.json()).rooms, []);
 });
+
+test("a script-only OSS release keeps media on the existing prefix and serves scripts from the new prefix", () => {
+  const output = mkdtempSync(path.join(tmpdir(), "mario-oss-scripts-"));
+  const scriptBaseURL = new URL("../scripts-v1/", base).href;
+  try {
+    const result = spawnSync(process.execPath, ["scripts/build-static.mjs"], {
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        ASSET_BASE_URL: base,
+        ASSET_SCRIPT_BASE_URL: scriptBaseURL,
+        BUILD_OUTPUT_DIR: output,
+      },
+    });
+    assert.equal(result.status, 0, result.stderr);
+    const html = readFileSync(path.join(output, "index.html"), "utf8");
+    const runtimeTag = html.match(
+      /<script[^>]+\/javascript\/runtime\.js[^>]+>/,
+    )?.[0];
+    assert.ok(runtimeTag?.includes(`${scriptBaseURL}javascript/runtime.js?v=`));
+    assert.ok(runtimeTag.includes('crossorigin="anonymous"'));
+    assert.ok(html.includes(`${base}assets/favicon.png`));
+    const manifest = JSON.parse(
+      readFileSync(path.join(output, "asset-manifest.json"), "utf8"),
+    );
+    assert.equal(manifest.baseURL, base);
+    assert.equal(manifest.scriptBaseURL, scriptBaseURL);
+  } finally {
+    rmSync(output, { recursive: true, force: true });
+  }
+});

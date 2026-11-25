@@ -42,7 +42,7 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 
 ## OSS 资源分发
 
-当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-controls-v2/`。图片、字体、音频、游戏脚本和运行库从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+当前使用北京的 `mac-cat` bucket。图片、字体和音频从 `mario/20261124-controls-v2/` 读取，JavaScript 从 `mario/20261124-coin-v1/` 读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
 
 构建与校验：
 
@@ -52,6 +52,8 @@ node scripts/prepare-oss-upload.mjs
 # 在 OSS 控制台 mario/ 目录中“扫描文件夹”，选择上一步输出的 NEW-VERSION 文件夹并上传。
 node scripts/verify-assets.mjs dist/asset-manifest.json docs/verification-oss.json
 ```
+
+只更新 JavaScript 时，保留现有 `ASSET_BASE_URL`，同时设置同一 OSS 域名下的新版 `ASSET_SCRIPT_BASE_URL`。上传脚本只收集 JavaScript，公网校验会检查两个目录中的所有活动资源。
 
 每次更新脚本或素材时使用新的版本目录，先上传并校验，再切换 ECS 发行。AccessKey 不进入前端、构建参数或仓库。现有 bucket 的公共读和 GET/HEAD 跨域规则已满足要求，本次未改动 bucket ACL、CORS 或其他项目的对象。
 

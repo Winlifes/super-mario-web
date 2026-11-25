@@ -12,17 +12,41 @@ test('all four players use one world; only the addressed player responds to inpu
   assert.equal(snapshot(world).enemies.length,world.enemies.filter(e=>!e.dead||world.tick-e.dead<25).length);
 });
 
-test('two players cannot collect the same question block twice', () => {
-  const world = createWorld(3); world.phase = 'playing';
+test('a coin block pops one shared coin and scores only when a player picks it up', () => {
+  const world = createWorld(3);
+  world.phase = 'playing';
+  world.enemies = [];
   const block = world.level.platforms.find(tile => tile.content === 'coin');
-  for (let i = 0; i < 2; i++) {
-    const p = addPlayer(world,`p${i}`,i);
-    p.x=block.x; p.y=block.y+16; p.vy=-100;
+  const players = [addPlayer(world, 'p0', 0), addPlayer(world, 'p1', 1)];
+  for (const player of players) {
+    player.x = block.x;
+    player.y = block.y + block.h;
+    player.vy = -100;
   }
   stepWorld(world);
-  assert.equal(world.used.size,1);
-  assert.equal(world.coins,1);
-  assert.equal(world.score,200);
+  assert.ok(world.used.has(block.id));
+  assert.equal(world.coins, 0);
+  assert.equal(world.score, 0);
+  const [released] = snapshot(world).items;
+  assert.equal(world.items.length, 1);
+  assert.equal(released[3], 'coin');
+  assert.ok(released[2] < block.y - 16);
+
+  for (let i = 0; i < 90; i++) stepWorld(world);
+  assert.equal(world.items[0].id, released[0]);
+  assert.equal(world.items[0].y + world.items[0].h, block.y);
+  assert.equal(world.coins, 0);
+  assert.equal(world.score, 0);
+
+  // Both players jump onto the coin from the side on the same frame.
+  for (const player of players) player.x = block.x - player.w - 6;
+  const jump = { axis: 1, jump: true, fire: false, run: false, down: false };
+  const inputs = new Map(players.map(player => [player.id, jump]));
+  for (let i = 0; i < 45; i++) stepWorld(world, inputs);
+  assert.equal(world.items.length, 0);
+  assert.equal(world.coins, 1);
+  assert.equal(world.score, 200);
+  assert.equal(world.events.filter(event => event.type === 'coin').length, 1);
 });
 
 test('falling costs a life and respawns a player without resetting teammates', () => {

@@ -31,30 +31,18 @@ function revealHiddenBlock(player, block) {
 
     let random = Phaser.Math.Between(0, 100);
     if (random < 90) {
-        addToScore.call(this, 200, block);
-        this.coinSound.play();
-        let coin = this.physics.add.sprite(block.getBounds().x, block.getBounds().y, 'coin').setScale(screenHeight / 357).setOrigin(0).anims.play('coin-default');
-        coin.immovable = true;
-        coin.smoothed = true;
-        coin.depth = 0;
-
+        const bounds = block.getBounds();
+        const coin = this.releasedCoins.create(bounds.centerX, bounds.top, 'coin')
+            .setScale(screenHeight / 357)
+            .setOrigin(0.5, 1)
+            .setDepth(3)
+            .play('coin-default');
         this.tweens.add({
             targets: coin,
-            duration: 250,
-            start: performance.now(),
-            y: coin.y - (screenHeight / 8.25),
-            onComplete: function() {
-                this.tweens.add({
-                    targets: coin,
-                    duration: 250,
-                    start: performance.now(),
-                    y: coin.y + (screenHeight / 10.35),
-                    onComplete: function() {
-                        coin.destroy();
-                    }
-                });
-            },
-            onCompleteScope: this
+            y: coin.y - 1.65 * coin.displayHeight,
+            duration: 220,
+            ease: 'Quad.Out',
+            yoyo: true
         });
 
     } else if (random >= 90 && random < 96 ) {
