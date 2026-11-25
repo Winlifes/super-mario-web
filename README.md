@@ -29,6 +29,8 @@ npm start
 node scripts/smoke-online.mjs https://game.winlife.fun/mario/
 ```
 
+图片、音频、字体、游戏脚本和 Phaser 已接入阿里云 OSS `mac-cat`，页面、大厅、联机服务及样式表由 ECS 提供。开发构建默认使用本地资源，生产构建通过 `ASSET_BASE_URL` 指定 OSS 版本目录。
+
 [部署和运行说明](docs/DEPLOYMENT.md) · [原版功能补齐计划](docs/ROADMAP.md) · [来源与差异对照](docs/SOURCE_AUDIT.md) · [上游原始说明](docs/UPSTREAM_README.md)
 
 房间保存在进程内存中，服务器重启后需重新建房。代码和资源说明见 [第三方声明](THIRD_PARTY_NOTICES.md)；上游MIT许可证保留于 [LICENSE](LICENSE)。

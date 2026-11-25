@@ -11,7 +11,7 @@ npm run build
 npm start
 ```
 
-默认地址为 `http://127.0.0.1:2678`。可通过 `HOST`、`PORT` 修改监听位置。所有运行素材、Phaser 和截图依赖均由本站提供。
+默认地址为 `http://127.0.0.1:2678`。可通过 `HOST`、`PORT` 修改监听位置。未设置 `ASSET_BASE_URL` 时，构建保留同域本地资源，适合开发和离线预览。
 
 ## 阿里云 ECS
 
@@ -38,3 +38,25 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 `/api/lobby` 返回公开房间摘要，不返回重连令牌或私密房间码。公开房间仅在等待且有席位时可加入；快速加入会寻找空房，找不到则创建公开房间。私密房间仍通过邀请链接/房间码加入。单人房为私密且最多1人。
 
 固定关卡数据和实现差异见 `docs/SOURCE_AUDIT.md`。服务器换关时广播新的地图版本，所有玩家使用同一阶段；奖励房允许队友分区游玩，共享金币和砖块状态。
+
+
+## OSS 资源分发
+
+当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-oss-v1/`。图片、字体、音频、游戏脚本和运行库共 123 个活动对象从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+
+构建与校验：
+
+```sh
+ASSET_BASE_URL=https://mac-cat.oss-cn-beijing.aliyuncs.com/mario/NEW-VERSION/ npm run build
+node scripts/prepare-oss-upload.mjs
+# 在 OSS 控制台 mario/ 目录中“扫描文件夹”，选择上一步输出的 NEW-VERSION 文件夹并上传。
+node scripts/verify-assets.mjs dist/asset-manifest.json docs/verification-oss.json
+```
+
+每次更新脚本或素材时使用新的版本目录，先上传并校验，再切换 ECS 发行。AccessKey 不进入前端、构建参数或仓库。现有 bucket 的公共读和 GET/HEAD 跨域规则已满足要求，本次未改动 bucket ACL、CORS 或其他项目的对象。
+
+`dist/asset-manifest.json` 记录资源的 URL 基址、交付位置、大小和 SHA-256。服务端从该清单读取 OSS 源并生成 CSP，只为该 HTTPS 源增加脚本、图片、音频、字体和请求权限。健康检查的 `assetBaseURL` 可用于确认当前发行。
+
+CSS 背景图片与 Phaser XHR 纹理请求不能共用无 CORS 响应的浏览器缓存。生产 CSS 将资源 URL 转成绝对 OSS 地址并加 `mario-use=css`；Phaser 使用普通 OSS URL 和匿名 CORS。两类请求使用不同缓存键。CSS 自身由 ECS 提供，并带内容哈希查询参数。OSS 对象保留其 ETag / Last-Modified，当前未强制设置长期 Cache-Control。
+
+验收包括全部活动对象的大小/SHA-256、脚本和 CSS MIME、跨域响应及音频 Range 请求；`tests/assets.test.mjs` 校验配置、构建引用、缓存键分离和服务端 CSP。

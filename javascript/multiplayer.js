@@ -459,6 +459,7 @@
         super("cooperation");
       }
       preload() {
+        window.MarioAssets.configureLoader(this.load);
         const images = {
           ground: "scenery/overworld/floorbricks.png",
           brick: "blocks/overworld/block.png",

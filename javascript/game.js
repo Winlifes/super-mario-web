@@ -197,6 +197,7 @@ var SmoothedHorionztalControl = new Phaser.Class({
 });
 
 function preload() {
+    window.MarioAssets.configureLoader(this.load);
 
     var progressBox = this.add.graphics();
     var progressBar = this.add.graphics();

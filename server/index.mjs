@@ -1,15 +1,23 @@
 import http from "node:http";
-import { createReadStream, existsSync, statSync, realpathSync } from "node:fs";
+import {
+  createReadStream,
+  existsSync,
+  statSync,
+  realpathSync,
+  readFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 import { WebSocketServer, WebSocket } from "ws";
 import { createWorld, addPlayer, stepWorld, snapshot } from "./world.mjs";
 import { publicLevel, stages } from "../shared/level.mjs";
+import { normalizeAssetBase, assetCsp } from "../shared/asset-config.mjs";
 
 const root = fileURLToPath(new URL("../dist/", import.meta.url));
 const MIME = {
   ".html": "text/html; charset=utf-8",
+  ".json": "application/json; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -48,6 +56,14 @@ const validCode = (code) =>
   typeof code === "string" && /^[A-HJ-NP-Z2-9]{6}$/.test(code);
 
 export function createGameServer(options = {}) {
+  const manifestPath = path.join(root, "asset-manifest.json");
+  const assetManifest = existsSync(manifestPath)
+    ? JSON.parse(readFileSync(manifestPath, "utf8"))
+    : {};
+  const assetBaseURL = normalizeAssetBase(
+    options.assetBaseURL ?? assetManifest.baseURL ?? "",
+  );
+  const contentSecurityPolicy = assetCsp(assetBaseURL);
   const rooms = new Map();
   const maxRooms = Number(options.maxRooms ?? process.env.MAX_ROOMS ?? 8);
   const maxPlayers = Number(
@@ -65,10 +81,7 @@ export function createGameServer(options = {}) {
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("Referrer-Policy", "same-origin");
     response.setHeader("X-Frame-Options", "DENY");
-    response.setHeader(
-      "Content-Security-Policy",
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'",
-    );
+    response.setHeader("Content-Security-Policy", contentSecurityPolicy);
     let url;
     try {
       url = new URL(request.url, "http://localhost");
@@ -83,6 +96,7 @@ export function createGameServer(options = {}) {
         JSON.stringify({
           ok: true,
           service: "mario-coop",
+          assetBaseURL,
           rooms: rooms.size,
           players: [...rooms.values()].reduce(
             (n, r) =>
