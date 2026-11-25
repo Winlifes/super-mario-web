@@ -27,7 +27,7 @@ async function join(hello) {
 }
 try {
   const health = await fetch(new URL('api/health', base)); assert.equal(health.status, 200);
-  const host = await join({ mode: 'create', name: '联机验证1' });
+  const host = await join({ mode: 'create', name: '联机验证1', stage: process.argv[3] || '1-1' });
   const welcome = await host.wait(m => m.type === 'welcome');
   for (let i = 1; i < 4; i++) {
     const c = await join({ mode: 'join', code: welcome.code, name: `联机验证${i + 1}` });
@@ -56,7 +56,7 @@ try {
   const resumed = await restored.wait(m => m.type === 'welcome');
   assert.equal(resumed.id, before.id); assert.equal(resumed.resumed, true);
   assert.equal((await restored.wait(m => m.type === 'state')).players.length, 4);
-  console.log(JSON.stringify({ status: 'passed', origin: base.origin, path: base.pathname, players: 4, sharedLevel: true, sharedState: true, movement: true, capacityLimit: true, reconnect: true, encryptedWebSocket: endpoint.protocol === 'wss:' }));
+  console.log(JSON.stringify({ status: 'passed', origin: base.origin, path: base.pathname, stage: courses[0].level.stage, players: 4, sharedLevel: true, sharedState: true, movement: true, capacityLimit: true, reconnect: true, encryptedWebSocket: endpoint.protocol === 'wss:' }));
 } finally {
   for (const c of clients) {
     if (c.ws.readyState === WebSocket.OPEN) c.send({ type: 'leave' });

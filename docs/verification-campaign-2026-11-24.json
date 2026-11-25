@@ -689,5 +689,76 @@
     }
   ],
   "fixtureCoverage": "All 32 endings, source transport graph, firework scoring, pipe/vine/warp routes, swimming, both branching mazes, scale carrying and new enemies are checked separately in tests. Fixture coverage is not claimed as natural completion of 32 courses.",
-  "physics": "60 Hz server port; jump acceleration and run cap now use the pinned source formula/values. Collision handling, cooperative life/checkpoint rules, clock and network interpolation are browser-port adaptations; no claim of ROM frame equivalence."
+  "physics": "60 Hz server port; jump acceleration and run cap now use the pinned source formula/values. Collision handling, cooperative life/checkpoint rules, clock and network interpolation are browser-port adaptations; no claim of ROM frame equivalence.",
+  "validation": {
+    "nodeTests": {
+      "passed": 39,
+      "failed": 0
+    },
+    "publicWebSocket": {
+      "stage": "8-4",
+      "players": 4,
+      "sharedLevel": true,
+      "sharedState": true,
+      "movement": true,
+      "capacityLimit": true,
+      "reconnect": true,
+      "encrypted": true
+    },
+    "oss": {
+      "baseURL": "https://mac-cat.oss-cn-beijing.aliyuncs.com/mario/20261124-campaign-v1/",
+      "objects": 208,
+      "bytes": 12492622,
+      "integrity": "All SHA-256 and size checks passed",
+      "cors": true,
+      "audioRange": true
+    },
+    "deployment": {
+      "release": "20261124-campaign-v3",
+      "url": "https://game.winlife.fun/mario/",
+      "archiveSha256": "1397563359eb3b5ae3c66602a2083a1cdac97c9e5fc3c0ac9ef9c3849e3e3a4a",
+      "runtime": "v24.22.2",
+      "htmlMatchesBuild": true,
+      "ossCspVerified": true,
+      "otherServicesHttpStatus": [
+        200,
+        200
+      ],
+      "postCheckHealth": {
+        "ok": true,
+        "service": "mario-coop",
+        "assetBaseURL": "https://mac-cat.oss-cn-beijing.aliyuncs.com/mario/20261124-campaign-v1/",
+        "rooms": 0,
+        "players": 0,
+        "capacity": {
+          "maxRooms": 8,
+          "maxPlayers": 16
+        }
+      }
+    }
+  },
+  "browser": {
+    "nativeSafari": {
+      "localNormalInputReplay": "8-4 completed through all five zones to Peach, three lives retained; B returned to the 32-course selector",
+      "observedScenes": [
+        "underwater swimming and rotating firebars",
+        "last castle and hammers",
+        "Peach rescue and all original dialogue lines",
+        "compact ending actions preserve dialogue visibility"
+      ],
+      "method": "Isolated local QA server played the saved control inputs at 60 Hz through the normal game server; browser received real WebSocket snapshots. No coordinate, life, item or completion writes. No public debug endpoint.",
+      "publicCheck": {
+        "url": "https://game.winlife.fun/mario/",
+        "courseSelector": "All 8 worlds present, 8-4 selected",
+        "assets": "All required game assets loaded; solo round auto-started",
+        "stage": "8-4",
+        "keyboard": "Right arrow moved Mario down the entrance stairs; three lives retained",
+        "cleanup": "Left the test room through the game UI; public lobby showed zero online players."
+      }
+    },
+    "nativeEdge": {
+      "ossUpload": "208 of 208 successful; 0 failures; existing bucket ACL and CORS unchanged"
+    }
+  },
+  "validatedAt": "2026-11-25T05:09:25.539429+00:00"
 }
