@@ -43,7 +43,7 @@ test('a teammate reaching the goal finishes the shared round once', () => {
   const score=world.score;
   for(let i=0;i<60;i++) stepWorld(world);
   assert.equal(world.phase,'cleared'); assert.equal(world.score,score);
-  assert.equal(world.events.filter(event=>event.type==='win').length,1);
+  assert.equal(world.events.filter(event=>event.type==='flagpole').length,1);
 });
 
 test('short and held jumps differ, and walking cannot cross solid pipes', () => {

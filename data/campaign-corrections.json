@@ -1,0 +1,10 @@
+[
+  {
+    "stage": "7-2",
+    "area": 1,
+    "thing": "PipeHorizontal",
+    "x": 1520,
+    "set": { "transport": 2 },
+    "reason": "The source omits its exit transport. The identical 2-2 exit uses location 2; 7-2 defines the same surface PipeVertical entrance 2."
+  }
+]

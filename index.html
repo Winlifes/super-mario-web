@@ -9,7 +9,7 @@
     />
     <meta
       name="description"
-      content="经典马里奥横版网页游戏：第一世界四关、龟壳连击、隐藏奖励房和2–4人联机合作。"
+      content="经典马里奥横版网页游戏：八大世界32关、隐藏路线、原版过场和2–4人联机合作。"
     />
     <meta name="theme-color" content="#8585ff" />
     <meta name="asset-base-url" content="" />
@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="assets/css/style.css" />
     <link rel="stylesheet" href="assets/css/multiplayer.css" />
     <script src="javascript/assets.js"></script>
+    <script src="javascript/campaign-assets.js"></script>
     <script src="vendor/phaser-3.55.2.min.js"></script>
     <script src="vendor/html2canvas-1.4.1.min.js"></script>
   </head>
@@ -44,7 +45,7 @@
       <section class="lobby-card" aria-labelledby="game-title">
         <div class="eyebrow">SUPER MARIO · WEB</div>
         <h1 id="game-title">马里奥 · 合作闯关</h1>
-        <p class="intro">第一世界 1-1 → 1-4 · 草地、地下、树台与城堡。</p>
+        <p class="intro">八大世界 1-1 → 8-4 · 水下、天空、迷宫与最终城堡。</p>
         <div id="entry-panel" class="hall-grid">
           <div class="hall-create">
             <label class="field-label" for="nickname">你的昵称</label>
@@ -89,7 +90,7 @@
                 加入
               </button>
             </form>
-            <button id="classic-mode" class="plain">单人挑战第一世界</button>
+            <button id="classic-mode" class="plain">单人连续闯关</button>
             <button id="random-mode" class="plain subtle">单人随机关卡</button>
           </div>
           <section class="public-hall" aria-labelledby="hall-title">
@@ -109,8 +110,8 @@
             </p>
           </section>
           <p class="hint controls-hint">
-            电脑：A / D 移动，空格跳跃，S / ↓ 蹲下或入管，Shift 奔跑，Q
-            发射火球。手机：使用屏幕按键。
+            电脑：A / D 移动，空格跳跃，S / ↓ 蹲下或入管，↑ /
+            跳跃游泳及爬藤，Shift 奔跑，Q 发射火球。手机：使用屏幕按键。
           </p>
         </div>
         <div id="room-panel" hidden>
@@ -136,7 +137,7 @@
         aria-hidden="true"
       />
       <div class="pixel-ground" aria-hidden="true"></div>
-      <footer>第一世界 · 公开大厅 · 好友合作</footer>
+      <footer>八大世界 · 公开大厅 · 好友合作</footer>
     </main>
     <div id="game-toolbar" class="game-toolbar" hidden>
       <div>
@@ -157,6 +158,9 @@
       <p id="round-detail"></p>
       <button id="again-button" class="primary" hidden>
         返回房间，再来一局
+      </button>
+      <button id="world-select-button" class="secondary" hidden>
+        选择世界（B）
       </button>
     </div>
     <div

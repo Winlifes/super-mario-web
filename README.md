@@ -4,13 +4,13 @@
 
 源码仓库：[Winlifes/super-mario-web](https://github.com/Winlifes/super-mario-web)。推送和拉取请求会自动运行测试与静态构建检查。
 
-基于 [Super Mario Phaser](https://github.com/pablogozalvez/Super-Mario-Phaser)，保留单人随机关卡，增加第一世界 1-1～1-4、公开大厅和服务端统一计算的 2–4 人合作闯关。
+基于 [Super Mario Phaser](https://github.com/pablogozalvez/Super-Mario-Phaser)，保留单人随机关卡，增加八大世界 1-1～8-4 共32关、公开大厅和服务端统一计算的 2–4 人合作闯关。
 
 ## 开始游玩
 
-在大厅快速加入公开房间，或创建公开/私密房间，把邀请链接或六位房间码发给朋友。全员完成资源加载并准备后，房主开始闯关。任一队友抵达旗杆即团队过关，随后自动进入下一关。城堡需越过酷霸王、触碰斧头并找到奇诺比奥。
+在大厅快速加入公开房间，或创建公开/私密房间，把邀请链接或六位房间码发给朋友。全员完成资源加载并准备后，房主开始闯关。任一队友抵达旗杆即团队过关，经历滑旗、进城、余时转分、烟花和升旗后进入下一关。城堡触斧后逐段断桥，角色自动走向奇诺比奥；8-4 迎来公主救援和最终对话。
 
-电脑使用 A/D 或方向键移动、空格跳跃、S/↓蹲下或入管、Shift 奔跑、Q 发射火球；手机使用屏幕按键。联机模式每人三条命，支持检查点复活和45秒断线重连。固定关卡支持单人挑战和联机合作，包含龟壳连击、隐藏金币房、星星、绿蘑菇、升降台与城堡机关。当前是第一世界四关，后续世界尚未开放。
+电脑使用 A/D 或方向键移动、空格跳跃、S/↓蹲下或入管、Shift 奔跑、Q 发射火球；手机使用屏幕按键。水下反复按跳跃游泳，藤蔓处按 ↑ / 跳跃向上爬。联机模式每人三条命，支持检查点复活和45秒断线重连。包含全部源奖励区域、原位置跳关水管、天平、下落平台、弹簧、新敌人及城堡迷宫。支持从32关中任意一关开始，通关后可按 B 返回选择世界。
 
 ## 本地开发
 
@@ -31,6 +31,6 @@ node scripts/smoke-online.mjs https://game.winlife.fun/mario/
 
 图片、音频、字体、游戏脚本和 Phaser 已接入阿里云 OSS `mac-cat`，页面、大厅、联机服务及样式表由 ECS 提供。开发构建默认使用本地资源，生产构建通过 `ASSET_BASE_URL` 指定 OSS 版本目录。
 
-[部署和运行说明](docs/DEPLOYMENT.md) · [原版功能补齐计划](docs/ROADMAP.md) · [来源与差异对照](docs/SOURCE_AUDIT.md) · [上游原始说明](docs/UPSTREAM_README.md)
+[部署和运行说明](docs/DEPLOYMENT.md) · [原版功能补齐计划](docs/ROADMAP.md) · [来源与差异对照](docs/SOURCE_AUDIT.md) · [八世界和过场验收](docs/CAMPAIGN_AUDIT.md) · [上游原始说明](docs/UPSTREAM_README.md)
 
 房间保存在进程内存中，服务器重启后需重新建房。代码和资源说明见 [第三方声明](THIRD_PARTY_NOTICES.md)；上游MIT许可证保留于 [LICENSE](LICENSE)。

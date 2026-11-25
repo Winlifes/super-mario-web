@@ -33,7 +33,7 @@ curl http://127.0.0.1:2678/api/health
 bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 ```
 
-运行包必须包含 `dist/`、`server/`、`shared/`、`data/`、`node_modules/ws/`、package 文件、LICENSE 和 THIRD_PARTY_NOTICES.md。`data/first-world.json` 由服务端加载，不能遗漏。
+运行包必须包含 `dist/`、`server/`、`shared/`、`data/`、`node_modules/ws/`、package 文件、LICENSE 和 THIRD_PARTY_NOTICES.md。`data/campaign.json`、`campaign-patterns.json`、`campaign-sprites.json` 和 `campaign-corrections.json` 由服务端加载，不能遗漏。
 
 `/api/lobby` 返回公开房间摘要，不返回重连令牌或私密房间码。公开房间仅在等待且有席位时可加入；快速加入会寻找空房，找不到则创建公开房间。私密房间仍通过邀请链接/房间码加入。单人房为私密且最多1人。
 
@@ -42,7 +42,7 @@ bash /opt/mario-web/releases/RELEASE_ID/deploy/activate.sh RELEASE_ID
 
 ## OSS 资源分发
 
-当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-oss-v1/`。图片、字体、音频、游戏脚本和运行库共 123 个活动对象从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
+当前 bucket：`mac-cat`，北京；版本目录：`mario/20261124-campaign-v1/`。图片、字体、音频、游戏脚本和运行库从 OSS 直接读取。HTML、两份 CSS、大厅 API 和 WebSocket 由 ECS 提供。资源仍保留在发行包中，以便回滚为本地模式。
 
 构建与校验：
 

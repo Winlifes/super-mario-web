@@ -75,9 +75,9 @@ test("campaign transitions preserve team score, coins, lives and forms, with a d
     stepWorld(w);
     assert.equal(w.phase, "cleared");
     const score = w.score;
-    run(w, 180);
+    for (let i = 0; i < 1800 && w.phase === "cleared"; i++) stepWorld(w);
     assert.equal(w.phase, "countdown");
-    assert.equal(w.score, score);
+    assert.ok(w.score >= score);
     assert.equal(p.form, 2);
     assert.equal(p.lives, 2);
     assert.equal(w.coins, 7);
@@ -96,6 +96,9 @@ test("down enters the original coin room, right returns through its exit, shared
   a.y = pipe.y - 16;
   a.ground = true;
   stepWorld(w, new Map([["a", command(0, false, { down: true })]]));
+  assert.equal(a.zone, 0);
+  assert.ok(a.transit);
+  run(w, 65);
   assert.equal(a.zone, 1);
   assert.equal(b.zone, 0);
   const coin = w.level.zones[1].coins[0];
@@ -108,6 +111,7 @@ test("down enters the original coin room, right returns through its exit, shared
   a.x = exit.x - 14;
   a.y = exit.y + 16;
   stepWorld(w, new Map([["a", command(1)]]));
+  run(w, 110);
   assert.equal(a.zone, 0);
   assert.ok(a.x > 2600);
   assert.ok(w.taken.has(coin.id));
@@ -230,7 +234,7 @@ test("a moving platform carries a standing player and remains identical in snaps
   );
 });
 
-test("Bowser takes five player fireballs; axe opens bridge and reaching Toad completes first world", () => {
+test("Bowser takes five player fireballs; axe opens the bridge progressively and Toad advances to world two", () => {
   const w = createWorld(1, { stage: "1-4" }),
     p = addPlayer(w, "a", 0);
   w.phase = "playing";
@@ -250,14 +254,10 @@ test("Bowser takes five player fireballs; axe opens bridge and reaching Toad com
   stepWorld(w);
   assert.equal(w.phase, "bridge");
   assert.ok(w.bridgeOpened);
-  assert.ok(
-    w.level.platforms
-      .filter((t) => t.type === "bridge")
-      .every((t) => w.broken.has(t.id)),
-  );
-  run(w, 120);
-  p.x = w.level.goal.x;
-  p.y = 176;
-  stepWorld(w);
-  assert.equal(w.phase, "won");
+  assert.equal(w.broken.size, 0);
+  run(w, 25);
+  assert.ok(w.broken.size > 0 && w.broken.size < 52);
+  for (let i = 0; i < 1800 && w.level.stage === "1-4"; i++) stepWorld(w);
+  assert.equal(w.phase, "countdown");
+  assert.equal(w.level.stage, "2-1");
 });

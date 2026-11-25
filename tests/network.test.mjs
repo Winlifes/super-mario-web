@@ -244,7 +244,19 @@ test(
     // Isolated network fixture: trigger a stage boundary, then verify both sockets receive the same new stage.
     const world = app.rooms.get(a.code).world;
     world.phase = "cleared";
-    world.countdown = 1;
+    const goal = world.level.zones.find((z) => z.goal).goal;
+    world.cutscene = {
+      type: "flag",
+      phase: "fireworks",
+      startedAt: world.tick - 500,
+      phaseAt: world.tick - 420,
+      playerId: app.rooms.get(a.code).hostId,
+      zone: 3,
+      goal,
+      time: 0,
+      fireworks: 0,
+      fired: 0,
+    };
     const next = await open.wait((m) => m.type === "start" && m.revision === 2);
     const peer = await quick.wait(
       (m) => m.type === "start" && m.revision === 2,
@@ -302,5 +314,83 @@ test(
     const player = app.rooms.get(hello.code).players.get(hello.id);
     assert.equal(player.lastSeq, 1);
     assert.equal(player.input.axis, 1);
+  },
+);
+
+test(
+  "later-world cutscene snapshots and a mid-scene reconnect share one server timeline",
+  { timeout: 7000 },
+  async (t) => {
+    const app = createGameServer(),
+      address = await app.listen(0),
+      base = `http://127.0.0.1:${address.port}`,
+      clients = [];
+    t.after(async () => {
+      for (const c of clients) c.ws.terminate();
+      await app.close();
+    });
+    const a = await client(base, {
+      mode: "create",
+      stage: "8-4",
+      name: "host",
+    });
+    clients.push(a);
+    const hello = await a.wait((m) => m.type === "welcome");
+    for (let i = 0; i < 3; i++) {
+      const b = await client(base, {
+        mode: "join",
+        code: hello.code,
+        name: `peer${i}`,
+      });
+      clients.push(b);
+      await b.wait((m) => m.type === "welcome");
+    }
+    for (const c of clients) c.send({ type: "ready", ready: true });
+    await a.wait((m) => m.type === "room" && m.players.every((p) => p.ready));
+    a.send({ type: "start" });
+    for (const c of clients)
+      assert.equal(
+        (await c.wait((m) => m.type === "start")).level.stage,
+        "8-4",
+      );
+    // Isolated transport test fixture. Normal-spawn input evidence is in input-replay.test.mjs.
+    const world = app.rooms.get(hello.code).world,
+      p = world.players.get(hello.id),
+      z = world.level.zones.find((z) => z.axe);
+    world.phase = "playing";
+    p.zone = z.zone;
+    p.x = z.axe.x;
+    p.y = z.axe.y;
+    const first = await a.wait(
+      (m) =>
+        m.type === "state" && m.phase === "bridge" && m.cutscene.removed > 0,
+    );
+    for (const c of clients.slice(1)) {
+      const same = await c.wait(
+        (m) => m.type === "state" && m.tick === first.tick,
+      );
+      assert.deepEqual(same.cutscene, first.cutscene);
+      assert.deepEqual(same.broken, first.broken);
+      assert.deepEqual(same.players, first.players);
+    }
+    const saved = clients[2].messages.find((m) => m.type === "welcome");
+    clients[2].ws.terminate();
+    await delay(30);
+    const restored = await client(base, {
+      mode: "join",
+      code: hello.code,
+      token: saved.token,
+    });
+    clients.push(restored);
+    assert.equal(
+      (await restored.wait((m) => m.type === "welcome")).resumed,
+      true,
+    );
+    const resumed = await restored.wait(
+      (m) => m.type === "state" && m.cutscene,
+    );
+    assert.equal(resumed.stage, "8-4");
+    assert.equal(resumed.cutscene.startedAt, first.cutscene.startedAt);
+    assert.ok(resumed.cutscene.removed >= first.cutscene.removed);
   },
 );

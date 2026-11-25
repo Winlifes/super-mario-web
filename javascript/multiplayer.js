@@ -1,6 +1,32 @@
 (() => {
   "use strict";
   const $ = (id) => document.getElementById(id);
+  const courseSelect = $("stage-choice");
+  courseSelect.replaceChildren();
+  for (let world = 1; world <= 8; world++) {
+    const group = document.createElement("optgroup");
+    group.label = `世界 ${world}`;
+    for (let course = 1; course <= 4; course++) {
+      const stage = `${world}-${course}`,
+        option = document.createElement("option");
+      option.value = stage;
+      const title =
+        course === 4
+          ? world === 8
+            ? "最终城堡"
+            : "城堡"
+          : ["2-2", "7-2"].includes(stage)
+            ? "水下"
+            : ["1-2", "4-2"].includes(stage)
+              ? "地下"
+              : course === 3
+                ? "高台"
+                : "地上";
+      option.textContent = `${stage} ${title}${stage === "1-1" ? " · 连续闯关" : ""}`;
+      group.append(option);
+    }
+    courseSelect.append(group);
+  }
   const colors = ["#ff705e", "#73df95", "#ffd66e", "#9eb6ff"];
   const keyState = new Set();
   const touchState = new Map();
@@ -361,6 +387,7 @@
     send({ type: "ready", ready: !self?.ready });
   });
   $("start-button").addEventListener("click", () => send({ type: "start" }));
+  $("world-select-button").addEventListener("click", leave);
   $("again-button").addEventListener("click", () => send({ type: "again" }));
   $("leave-lobby").addEventListener("click", leave);
   $("leave-game").addEventListener("click", leave);
@@ -395,6 +422,10 @@
     location.assign(location.pathname),
   );
   document.addEventListener("keydown", (event) => {
+    if (event.code === "KeyB" && latestState?.phase === "won") {
+      leave();
+      return;
+    }
     if (
       !$("game-toolbar").hidden &&
       [
@@ -551,6 +582,28 @@
         this.load.audio("coop-star-music", "assets/first-world/star.mp3");
         this.load.audio("coop-oneup", "assets/first-world/oneup.mp3");
         this.load.audio("coop-bridge", "assets/first-world/bridge.mp3");
+        for (const sheet of window.MarioCampaignAssets)
+          this.load.spritesheet(
+            `coop-campaign-${sheet.name}`,
+            `assets/campaign/${sheet.name}.png`,
+            { frameWidth: sheet.width, frameHeight: sheet.height },
+          );
+        for (const name of [
+          "underwater",
+          "sky",
+          "flagpole",
+          "stageclear",
+          "worldclear",
+          "firework",
+          "ending",
+          "pipe",
+          "vine",
+          "die",
+        ])
+          this.load.audio(
+            `coop-original-${name}`,
+            `assets/campaign/${name}.mp3`,
+          );
         this.load.on("progress", (value) => {
           if (!$("lobby").hidden)
             status(`正在准备游戏资源 ${Math.round(value * 100)}%…`);
@@ -586,6 +639,7 @@
       musicFor(key) {
         if (this.musicKey === key) return;
         this.music?.stop();
+        this.music?.destroy();
         this.musicKey = key;
         this.music = this.sound.add(key, { loop: true, volume: 0.16 });
         this.music.play();
@@ -605,73 +659,157 @@
         this.items = new Map();
         this.bullets = new Map();
         this.flames = new Map();
+        this.hammers = new Map();
+        this.vines = new Map();
+        this.ropes = new Map();
+        this.bubbles = new Map();
         this.tiles = new Map();
         this.coins = new Map();
         this.movers = new Map();
         this.firebars = [];
         this.cameras.main
           .setBackgroundColor(
-            level.setting === "Overworld" ? "#5c94fc" : "#080808",
+            level.underwater
+              ? "#5c94fc"
+              : /Night|Underworld|Castle/.test(level.setting)
+                ? "#080808"
+                : "#5c94fc",
           )
           .setBounds(0, 0, level.width, level.height);
-        this.underground = level.setting === "Underworld";
-        this.castle = level.setting === "Castle";
-        if (level.setting === "Overworld")
-          for (let x = 80; x < level.width; x += 310) {
-            this.add
-              .image(x, 44 + (x % 25), "coop-cloud")
-              .setDisplaySize(56, 27)
-              .setScrollFactor(0.85);
-            if (bundle.stage !== "1-3") {
-              this.add
-                .image(x + 80, 208, "coop-hill")
-                .setOrigin(0.5, 1)
-                .setDisplaySize(72, 36);
-              this.add
-                .image(x - 30, 208, "coop-bush")
-                .setOrigin(0.5, 1)
-                .setDisplaySize(48, 16);
-            }
-          }
+        this.underground = level.setting.includes("Underworld");
+        this.castle = level.setting.includes("Castle");
+        this.underwater = level.underwater;
+        this.sky = level.sky;
         for (const d of level.decorations || []) {
-          if (d.type === "trunk")
+          if (d.type === "trunk" || d.type === "shroom-trunk")
             this.add
-              .tileSprite(d.x, d.y, d.w, d.h, "coop-tree-trunk")
+              .tileSprite(
+                d.x,
+                d.y,
+                d.w,
+                d.h,
+                d.type === "trunk"
+                  ? "coop-tree-trunk"
+                  : "coop-campaign-shroom-trunk",
+              )
               .setOrigin(0)
               .setDepth(0);
+          if (d.type === "railing")
+            this.add
+              .tileSprite(d.x, d.y, d.w, d.h, "coop-campaign-railing")
+              .setOrigin(0)
+              .setDepth(1);
+          if (d.type === "source-scenery") {
+            const meta = window.MarioCampaignAssets.find(
+              (s) => s.name === d.sprite,
+            );
+            this.add
+              .tileSprite(
+                d.x,
+                d.y,
+                d.w || meta.width,
+                d.h || meta.height,
+                `coop-campaign-${d.sprite}`,
+              )
+              .setOrigin(0)
+              .setDepth(0);
+          }
+          if (d.type === "scale-string")
+            this.add
+              .rectangle(d.x, d.y, d.w, 1, 0xffffff)
+              .setOrigin(0)
+              .setDepth(1);
           if (d.type === "castle")
             this.add
               .image(d.x, d.y, "coop-castle")
               .setOrigin(0.5, 1)
-              .setScale(d.large ? 1.4 : 1);
-          if (d.type === "toad")
-            this.add.image(d.x, d.y, "coop-toad").setOrigin(0).setDepth(2);
-          if (d.type === "locked-warp")
+              .setScale(d.large ? 1.4 : 1)
+              .setDepth(2);
+          if (d.type === "toad" || d.type === "peach")
             this.add
-              .text(d.x, d.y, `WORLD ${d.world}\n待开放`, {
+              .image(
+                d.x,
+                d.y,
+                d.type === "peach" ? "coop-campaign-peach" : "coop-toad",
+              )
+              .setOrigin(0)
+              .setDepth(2);
+          if (d.type === "warp")
+            this.add
+              .text(d.x, d.y, String(d.world), {
                 fontFamily: "monospace",
-                fontSize: "7px",
-                align: "center",
+                fontSize: "8px",
+                color: "#fff",
+              })
+              .setOrigin(0.5, 1)
+              .setResolution(3);
+          if (d.type === "warp-welcome")
+            this.add
+              .text(d.x, d.y, "WELCOME TO WARP WORLD!", {
+                fontFamily: "monospace",
+                fontSize: "8px",
                 color: "#fff",
               })
               .setOrigin(0.5, 1)
               .setResolution(3);
         }
+        if (level.entryVine) {
+          const v = level.entryVine;
+          this.add
+            .tileSprite(v.x * 2, v.y, v.w, v.h, "coop-campaign-vine-body")
+            .setOrigin(0)
+            .setDepth(1);
+        }
+        if (this.underwater) {
+          this.add
+            .rectangle(0, 24, level.width, 8, 0xaaaaff, 0.7)
+            .setOrigin(0)
+            .setDepth(0);
+          for (let x = 0; x < level.width; x += 16)
+            this.add.rectangle(x, 24, 8, 2, 0xffffff).setOrigin(0).setDepth(0);
+        }
         for (const t of level.platforms) {
           let image;
-          if (t.type === "tree") {
+          if (t.type === "tree" || t.type === "shroom") {
+            const tree =
+              t.type === "shroom" ? "coop-campaign-shroom" : "coop-tree";
             image = this.add.container(t.x, t.y);
-            image.add(this.add.image(0, 0, "coop-tree-left").setOrigin(0));
+            image.add(this.add.image(0, 0, `${tree}-left`).setOrigin(0));
             if (t.w > 32)
               image.add(
                 this.add
-                  .tileSprite(16, 0, t.w - 32, 16, "coop-tree-middle")
+                  .tileSprite(16, 0, t.w - 32, 16, `${tree}-middle`)
                   .setOrigin(0),
               );
             image.add(
-              this.add.image(t.w - 16, 0, "coop-tree-right").setOrigin(0),
+              this.add.image(t.w - 16, 0, `${tree}-right`).setOrigin(0),
             );
-          } else if (t.type === "question")
+          } else if (t.type === "cannon") {
+            image = this.add.container(t.x, t.y);
+            image.add(
+              this.add.image(0, 0, "coop-campaign-cannon-top").setOrigin(0),
+            );
+            if (t.h > 16)
+              image.add(
+                this.add
+                  .tileSprite(0, 16, t.w, t.h - 16, "coop-campaign-cannon-body")
+                  .setOrigin(0),
+              );
+          } else if (t.type === "spring") {
+            image = this.add.container(t.x, t.y);
+            image.add(
+              this.add
+                .tileSprite(0, 0, 16, 21, "coop-campaign-spring-body")
+                .setOrigin(0),
+            );
+            image.add(
+              this.add.image(0, 21, "coop-campaign-spring-bottom").setOrigin(0),
+            );
+          } else if (["coral", "bridge-base", "shroom-trunk"].includes(t.type))
+            image = this.add
+              .tileSprite(t.x, t.y, t.w, t.h, `coop-campaign-${t.type}`)
+              .setOrigin(0);
+          else if (t.type === "question")
             image = this.add.sprite(
               t.x + 8,
               t.y + 8,
@@ -707,7 +845,15 @@
             c.id,
             this.add.sprite(c.x, c.y, "coop-coin").setDepth(3),
           );
-        for (const m of level.movers || [])
+        for (const m of level.movers || []) {
+          if (m.mode === "scale")
+            this.ropes.set(
+              m.id,
+              this.add
+                .rectangle(m.anchorX, m.anchorY, 1, m.y - m.anchorY, 0xffffff)
+                .setOrigin(0)
+                .setDepth(1),
+            );
           this.movers.set(
             m.id,
             this.add
@@ -715,7 +861,18 @@
               .setOrigin(0)
               .setDepth(3),
           );
+        }
         for (const h of level.hazards || []) {
+          if (h.type === "water") {
+            this.add
+              .rectangle(h.x, h.y + 6, h.w, h.h, 0x2040d8)
+              .setOrigin(0)
+              .setDepth(1);
+            this.add
+              .rectangle(h.x, h.y, h.w, 6, 0x8898ff)
+              .setOrigin(0)
+              .setDepth(1);
+          }
           if (h.type === "lava") {
             this.add
               .rectangle(h.x, h.y + 8, h.w, Math.max(16, h.h - 8), 0xd82800)
@@ -734,6 +891,8 @@
         }
         this.flag = null;
         this.axe = null;
+        this.castleFlag = null;
+        this.dialog = [];
         if (level.goal?.type === "flag") {
           this.add
             .image(level.goal.x, 208, "coop-flagpole")
@@ -744,6 +903,41 @@
             .setOrigin(1, 0.5)
             .setDepth(2);
         }
+        if (level.goal?.type === "flag") {
+          this.castleFlag = this.add
+            .image(
+              level.goal.doorX,
+              level.goal.groundY - 48,
+              "coop-campaign-castle-flag",
+            )
+            .setOrigin(0.5, 1)
+            .setDepth(1)
+            .setVisible(false);
+        }
+        if (["toad", "peach"].includes(level.goal?.type)) {
+          const lines =
+            level.goal.type === "peach"
+              ? [
+                  "THANK YOU MARIO!",
+                  "YOUR QUEST IS OVER.\nWE PRESENT YOU A NEW QUEST.",
+                  "PRESS BUTTON B\nTO SELECT A WORLD",
+                ]
+              : ["THANK YOU MARIO!", "BUT OUR PRINCESS IS IN\nANOTHER CASTLE!"];
+          this.dialog = lines.map((text, i) =>
+            this.add
+              .text(level.goal.x + 24, 72 + i * 32, text, {
+                fontFamily: "monospace",
+                fontSize: "7px",
+                color: "#fff",
+                align: "center",
+                lineSpacing: 7,
+              })
+              .setOrigin(0.5, 0)
+              .setResolution(3)
+              .setDepth(7)
+              .setVisible(false),
+          );
+        }
         if (level.axe)
           this.axe = this.add
             .sprite(level.axe.x, level.axe.y, "coop-axe")
@@ -751,14 +945,24 @@
             .setDepth(4);
         this.resizeCamera();
         this.musicKey = null;
-        this.musicFor(
-          this.castle
-            ? "coop-castle-music"
-            : this.underground
-              ? "coop-underground"
-              : "coop-music",
-        );
+        this.music?.stop();
+        if (
+          !latestState ||
+          ["playing", "countdown"].includes(latestState.phase)
+        )
+          this.musicFor(this.themeKey());
         lastHud = 0;
+      }
+      themeKey() {
+        return this.underwater
+          ? "coop-original-underwater"
+          : this.sky
+            ? "coop-original-sky"
+            : this.castle
+              ? "coop-castle-music"
+              : this.underground
+                ? "coop-underground"
+                : "coop-music";
       }
       update(time, delta) {
         const state = latestState;
@@ -782,7 +986,12 @@
           if (image.visible) image.setFrame(frame % 4);
         }
         for (const [id, x, y, z] of state.movers || []) {
-          if (z === zone) this.movers.get(id)?.setPosition(x, y);
+          if (z === zone) {
+            this.movers.get(id)?.setPosition(x, y);
+            const m = this.level.movers.find((m) => m.id === id),
+              rope = this.ropes.get(id);
+            if (rope) rope.setDisplaySize(1, Math.max(1, y - m.anchorY));
+          }
         }
         for (const { h, sprites } of this.firebars) {
           const angle =
@@ -800,6 +1009,30 @@
         }
         if (this.axe)
           this.axe.setVisible(!state.bridgeOpened).setFrame(frame % 3);
+        for (const [id, { image, tile }] of this.tiles)
+          if (tile.type === "spring") {
+            const compression =
+              state.springs?.find((s) => s[0] === id)?.[1] || 0;
+            image.setScale(1, 1 - compression * 0.35);
+            image.y = tile.y + compression * 10;
+          }
+        const cinematic = state.cutscene;
+        if (this.flag)
+          this.flag.y =
+            cinematic?.type === "flag"
+              ? cinematic.flagY
+              : this.level.goal.y + 9;
+        if (this.castleFlag)
+          this.castleFlag
+            .setVisible(!!cinematic?.castleFlag)
+            .setY(
+              this.level.goal.groundY - 48 - (cinematic?.castleFlag || 0) * 14,
+            );
+        this.dialog.forEach((line, i) =>
+          line.setVisible(
+            cinematic?.type === "castle" && (cinematic.dialogLines || 0) > i,
+          ),
+        );
         const ids = new Set();
         for (const p of state.players) {
           const [
@@ -817,6 +1050,8 @@
             pzone,
             star,
             crouch,
+            pose,
+            deathAge,
           ] = p;
           if (pzone !== zone) continue;
           ids.add(id);
@@ -858,19 +1093,35 @@
             this.actors.set(id, a);
           }
           const s = a.sprite,
-            key = form === 2 ? "coop-fire" : form ? "coop-big" : "coop-small",
-            f = crouch
-              ? 4
-              : Math.abs(vy) > 8
-                ? 5
-                : Math.abs(vx) > 3
-                  ? 1 + (frame % 3)
-                  : 0;
+            death = !alive && deathAge >= 0 && deathAge < 120;
+          let key = form === 2 ? "coop-fire" : form ? "coop-big" : "coop-small";
+          let f = crouch
+            ? 4
+            : Math.abs(vy) > 8
+              ? 5
+              : Math.abs(vx) > 3
+                ? 1 + (frame % 3)
+                : 0;
+          if (pose === "climb") {
+            key = `coop-campaign-player-climb-${form}`;
+            f = frame % 2;
+          } else if (pose === "swim") {
+            key = `coop-campaign-player-swim-${form}`;
+            f = frame % 3;
+          } else if (death) {
+            key = "coop-campaign-player-dead";
+            f = 0;
+          }
           s.setTexture(key, f)
             .setFlipX(facing < 0)
-            .setVisible(Boolean(alive));
+            .setVisible((Boolean(alive) && pose !== "hidden") || death)
+            .setDepth(pose === "pipe" ? 1 : 5);
           const tx = x + 7,
-            ty = y + (form && !crouch ? 32 : 16);
+            t = death ? Math.max(0, deathAge - 7) / 60 : 0,
+            ty =
+              y +
+              (form && !crouch ? 32 : 16) +
+              (death ? -168 * t + 225 * t * t : 0);
           s.setPosition(
             Math.abs(s.x - tx) > 70 ? tx : Phaser.Math.Linear(s.x, tx, blend),
             Math.abs(s.y - ty) > 70 ? ty : Phaser.Math.Linear(s.y, ty, blend),
@@ -881,8 +1132,10 @@
           else s.clearTint();
           a.label
             .setPosition(s.x, s.y - (form && !crouch ? 35 : 19))
-            .setVisible(Boolean(alive));
-          a.marker.setPosition(s.x, s.y + 1).setVisible(Boolean(alive));
+            .setVisible(Boolean(alive) && pose !== "hidden" && pose !== "pipe");
+          a.marker
+            .setPosition(s.x, s.y + 1)
+            .setVisible(Boolean(alive) && pose !== "hidden" && pose !== "pipe");
         }
         for (const [id, a] of this.actors)
           if (!ids.has(id)) {
@@ -898,45 +1151,51 @@
             this.add.sprite(e[1], e[2], "coop-goomba").setOrigin(0).setDepth(4),
           (s, e) => {
             const type = e[5],
-              shell = type === "koopa" && e[6] !== "walk",
-              key =
-                type === "goomba"
-                  ? `goomba${this.underground ? "-under" : ""}`
-                  : type === "koopa"
-                    ? shell
-                      ? e[8]
-                        ? "shell-red"
-                        : "shell"
-                      : e[9]
-                        ? e[8]
-                          ? "koopa-winged-red"
-                          : "koopa-winged"
-                        : e[8]
-                          ? "koopa-red"
-                          : "koopa"
-                    : type;
-            const f =
-              type === "bowser"
+              shell = ["koopa", "beetle"].includes(type) && e[6] !== "walk";
+            let key =
+              type === "goomba"
+                ? `coop-goomba${this.underground ? "-under" : ""}`
+                : type === "koopa"
+                  ? `coop-${shell ? (e[8] ? "shell-red" : "shell") : e[9] ? (e[8] ? "koopa-winged-red" : "koopa-winged") : e[8] ? "koopa-red" : "koopa"}`
+                  : type === "bowser" || type === "piranha"
+                    ? `coop-${type}`
+                    : `coop-campaign-${type === "beetle" && shell ? "beetle-shell" : type === "cheep" && e[14] ? "cheep-red" : type === "blooper" && e[13] ? "blooper-squeeze" : type === "lakitu" && e[11] ? "lakitu-hiding" : type}`;
+            let f =
+              type === "bowser" || type === "hammerbro"
                 ? (frame % 2) + (e[11] ? 2 : 0)
                 : type === "goomba" && e[4]
                   ? 2
-                  : shell
+                  : shell ||
+                      ["podoboo", "bill", "lakitu", "blooper"].includes(type)
                     ? 0
                     : frame % 2;
-            s.setTexture(`coop-${key}`, f)
+            if (type === "bowser" && e[4]) {
+              const disguise =
+                {
+                  Goomba: "goomba",
+                  Koopa: "koopa",
+                  Beetle: "beetle",
+                  Spiny: "spiny",
+                  SpinyEgg: "spiny-egg",
+                  Blooper: "blooper",
+                  HammerBro: "hammerbro",
+                  Bowser: "bowser",
+                }[e[12]] || "goomba";
+              key = ["goomba", "koopa", "bowser"].includes(disguise)
+                ? `coop-${disguise}`
+                : `coop-campaign-${disguise}`;
+              f = 0;
+            }
+            s.setTexture(key, f)
               .setPosition(
                 Phaser.Math.Linear(s.x, e[1], blend),
                 Phaser.Math.Linear(s.y, e[2], blend),
               )
-              .setFlipX(type === "bowser" ? e[3] > 0 : e[3] > 0)
-              .setAlpha(e[4] ? 0.6 : 1);
-            s.clearTint();
-            if (type === "bowser" && state.bridgeOpened) s.setFlipY(true);
-            if (type === "bowser" && e[4])
-              s.setTexture(
-                `coop-goomba${this.underground ? "-under" : ""}`,
-                0,
-              ).setFlipY(true);
+              .setFlipX(e[3] > 0)
+              .setFlipY(e[16] === "flip" || (type === "podoboo" && e[15] > 0))
+              .setAlpha(e[4] ? 0.65 : 1)
+              .setDepth(type === "piranha" ? 1 : 4)
+              .clearTint();
           },
         );
         this.updateEntities(
@@ -967,25 +1226,61 @@
             this.add.image(0, 0, "coop-bowser-fire").setOrigin(0).setDepth(4),
           (s, e) => s.setPosition(e[1], e[2]).setFlipX(e[4] > 0),
         );
+        this.updateEntities(
+          this.hammers,
+          (state.hammers || []).filter((e) => e[3] === zone),
+          () => this.add.sprite(0, 0, "coop-campaign-hammer").setDepth(4),
+          (s, e) =>
+            s.setPosition(e[1], e[2]).setFrame(Math.floor(time / 50) % 4),
+        );
+        this.updateEntities(
+          this.vines,
+          (state.vines || []).filter((e) => e[4] === zone),
+          () =>
+            this.add
+              .tileSprite(0, 0, 14, 1, "coop-campaign-vine-body")
+              .setOrigin(0)
+              .setDepth(1),
+          (s, e) => s.setPosition(e[1], e[2]).setSize(14, Math.max(1, e[3])),
+        );
+        if (this.underwater) {
+          for (const p of state.players.filter((p) => p[11] === zone && p[7])) {
+            const key = `${p[0]}:${Math.floor(state.tick / 96)}`;
+            if (!this.bubbles.has(key)) {
+              const bubble = this.add
+                .image(p[1] + 7, p[2] + 4, "coop-campaign-bubble")
+                .setDepth(5);
+              this.bubbles.set(key, bubble);
+              this.tweens.add({
+                targets: bubble,
+                y: 24,
+                duration: 1800,
+                onComplete: () => {
+                  bubble.destroy();
+                  this.bubbles.delete(key);
+                },
+              });
+            }
+          }
+        }
         const self = this.actors.get(me);
         if (self) this.cameras.main.centerOn(self.sprite.x + 35, 120);
-        if (this.flag && ["cleared", "won"].includes(state.phase))
-          this.flag.y = Math.min(190, this.flag.y + delta * 0.08);
+
         const own = state.players.find((p) => p[0] === me);
-        if (state.phase === "playing")
-          this.musicFor(
-            own?.[12]
-              ? "coop-star-music"
-              : this.castle
-                ? "coop-castle-music"
-                : this.underground
-                  ? "coop-underground"
-                  : "coop-music",
-          );
+        if (["playing", "countdown"].includes(state.phase))
+          this.musicFor(own?.[12] ? "coop-star-music" : this.themeKey());
+        else {
+          this.music?.stop();
+          this.musicKey = null;
+        }
         for (const event of state.events)
           if (event.id > seenEvent) {
             seenEvent = event.id;
-            if (event.zone !== zone) continue;
+            if (
+              event.zone !== zone ||
+              state.tick - (event.tick ?? state.tick) > 120
+            )
+              continue;
             if (event.type === "score" || event.type === "oneup") {
               const label = this.add
                 .text(
@@ -1023,14 +1318,34 @@
                   duration: 90,
                 });
             }
+            if (event.type === "firework") {
+              const explosion = this.add
+                .sprite(event.x, event.y, "coop-campaign-firework", 0)
+                .setDepth(8);
+              for (let i = 1; i < 3; i++)
+                this.time.delayedCall(
+                  (i * 7 * 1000) / 60,
+                  () => explosion.active && explosion.setFrame(i),
+                );
+              this.time.delayedCall((21 * 1000) / 60, () =>
+                explosion.destroy(),
+              );
+            }
+            const soundKey = this.cache.audio.exists(
+              `coop-original-${event.type}`,
+            )
+              ? `coop-original-${event.type}`
+              : event.type === "count"
+                ? "coop-coin"
+                : `coop-${event.type}`;
             if (
               !muted &&
-              this.cache.audio.exists(`coop-${event.type}`) &&
+              this.cache.audio.exists(soundKey) &&
               (event.playerId === me ||
                 !self ||
                 Math.abs(event.x - self.sprite.x) < 350)
             )
-              this.sound.play(`coop-${event.type}`, {
+              this.sound.play(soundKey, {
                 volume: event.type === "win" ? 0.35 : 0.25,
               });
           }
@@ -1089,44 +1404,36 @@
       })
       .join("　");
     const ending = ["won", "lost"].includes(state.phase),
-      transition = ["cleared", "bridge"].includes(state.phase);
-    $("round-message").hidden =
-      state.phase !== "countdown" && !ending && !transition;
+      transition = ["cleared", "bridge", "rescue", "warp"].includes(
+        state.phase,
+      );
+    $("round-message").hidden = state.phase !== "countdown" && !ending;
     $("again-button").hidden = true;
+    $("world-select-button").hidden = true;
     if (state.phase === "countdown") {
       $("round-title").textContent =
-        `${state.stage} · ${Math.max(1, state.countdown)}`;
-      $("round-detail").textContent =
-        state.stage === "1-4"
-          ? "躲开火棒，越过酷霸王，触碰斧头打开吊桥。"
-          : state.stage === "1-3"
-            ? "借助树台与移动平台跨越深坑，小心乌龟与栗宝宝。"
-            : state.stage === "1-2"
-              ? "地下尽头向右进入横向水管。有入口的直管可按 ↓ 进入奖励房。"
-              : "奔跑、跳跃，和队友一起过关。水管上按 ↓ 可进入奖励房。";
-    } else if (transition) {
-      scene?.music?.stop();
-      scene.musicKey = null;
+        `WORLD ${state.stage} · ${Math.max(1, state.countdown)}`;
+      $("round-detail").textContent = state.stage.endsWith("-4")
+        ? "城堡：越过机关、触碰斧头，救援后将继续下一世界。"
+        : scene?.underwater
+          ? "水下：反复按跳跃游泳，向右进入出口水管。"
+          : scene?.sky
+            ? "天空奖励区：乘平台收集金币，落下即可回到地面。"
+            : "连续闯关 · ↓ 入管，↑ / 跳跃游泳或爬藤，Shift 奔跑。";
+    } else if (transition) resetInput();
+    else if (ending) {
       resetInput();
       $("round-title").textContent =
-        state.phase === "bridge" ? "吊桥打开了！" : `${state.stage} 通关！`;
-      $("round-detail").textContent =
-        state.phase === "bridge"
-          ? "酷霸王落下后，继续向右找到奇诺比奥。"
-          : `下一关即将开始 · 形态、金币与剩余生命会保留。`;
-    } else if (ending) {
-      scene?.music?.stop();
-      scene.musicKey = null;
-      resetInput();
-      $("round-title").textContent =
-        state.phase === "won" ? "第一世界通关！" : "再试一次吧";
+        state.phase === "won" ? "八大世界通关！" : "再试一次吧";
       $("round-detail").textContent =
         state.phase === "won"
-          ? `奇诺比奥：谢谢你！公主在另一座城堡。团队分数 ${state.score}。`
+          ? `公主获救！团队分数 ${state.score}。可返回房间重玩，或按 B 重新选择世界。`
           : `团队分数 ${state.score}，共收集 ${state.coins} 枚金币。`;
       $("again-button").hidden = room?.hostId !== me;
+      $("world-select-button").hidden = state.phase !== "won";
     }
   }
+
   const saved = readStorage(sessionStorage, "coop-session");
   if (saved && incomingCode) {
     try {
