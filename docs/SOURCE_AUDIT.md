@@ -34,7 +34,7 @@
 
 - 下落时要从敌人上方接触才判定为踩踏。旗杆需要实际接触。低顶下吃到变身道具会先保留可活动的碰撞高度，有空间再站起来。循环平台重置时会放开搭乘的角色。
 - 靠近水管时，尚未露头的食人花会等到下一次出管机会。蹲姿出管、死亡和复活会更新角色高度与动作状态，断线期间暂停角色交互，重连时可继续未完成的进管动作。第 100 枚团队金币发放的额外生命也能让已耗尽生命的队友复活。
-- 原版问号方块的金币弹出即入账。网页按现有玩法在触碰弹出的金币时加 1 枚和 200 分。[红白机玩法说明](https://www.nintendo.com/jp/famicom/software/smb1/index.html) · [原版程序的金币处理](https://6502disassembly.com/nes-smb/SuperMarioBros.html)
+- 问号方块及多金币砖每次有效顶击即时加 1 枚和 200 分，弹出的金币短暂展示后消失。场景中的金币在角色触碰时入账。[红白机玩法说明](https://www.nintendo.com/jp/famicom/software/smb1/index.html) · [原版程序的金币处理](https://6502disassembly.com/nes-smb/SuperMarioBros.html)
 - 原版双人轮流操作。网页保留同局合作、共享计分、房间倒计时、检查点复活和重连。[任天堂对原版双人玩法的回顾](https://www.nintendo.com/en-gb/Iwata-Asks/Iwata-Asks-New-Super-Mario-Bros-Wii/Volume-3/3-With-His-Wife-on-His-Shoulders-/3-With-His-Wife-on-His-Shoulders--219541.html)
 
 本轮新增 8 项针对上述碰撞和状态问题的回归测试，并重新验证了 10 个代表关卡的自然出生点按键回放。

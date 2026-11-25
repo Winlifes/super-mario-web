@@ -18,7 +18,8 @@ import {
   playerRow,
 } from "./motion.mjs";
 const DT = 1 / 60,
-  GRAVITY = 900;
+  GRAVITY = 900,
+  COIN_POP_TICKS = 30;
 const neutral = Object.freeze({
   axis: 0,
   jump: false,
@@ -67,6 +68,7 @@ function installStage(w, stage) {
     z.movers.map((m) => ({ ...m, dx: 0, dy: 0 })),
   );
   w.items = [];
+  w.coinPops = [];
   w.bullets = [];
   w.flames = [];
   w.used = new Set();
@@ -199,25 +201,17 @@ function coin(w, p, x, y) {
     for (const member of w.players.values()) life(w, member);
   emit(w, "coin", x, y, p.id, 0, p.zone);
 }
-function releaseBlockCoin(w, tile) {
-  const item = {
+function popBlockCoin(w, p, tile) {
+  const x = tile.x + (tile.w - 16) / 2;
+  const y = tile.y - 16;
+  coin(w, p, x + 8, y + 8);
+  w.coinPops.push({
     id: `i${w.entityId++}`,
-    type: "coin",
-    zone: tile.zone,
-    x: tile.x + (tile.w - 16) / 2,
-    y: tile.y - 16,
-    w: 16,
-    h: 16,
-    vx: 0,
-    vy: -225,
-    collectAt: w.tick + 6,
-  };
-  // A stacked brick can block the exit above. Drop into the space the player hit from.
-  if (solids(w, item).some((solid) => overlap(item, solid))) {
-    item.y = tile.y + tile.h;
-    item.vy = 60;
-  }
-  w.items.push(item);
+    zone: p.zone,
+    x,
+    y,
+    tick: w.tick,
+  });
 }
 function hitBlock(w, p, t) {
   if (w.used.has(t.id) || w.broken.has(t.id)) return;
@@ -233,7 +227,7 @@ function hitBlock(w, p, t) {
     if (t.content !== "multi" || hit.count >= 10 || w.tick >= hit.until)
       w.used.add(t.id);
     emit(w, "bump", t.x, t.y, p.id, 0, p.zone);
-    if (t.content === "coin" || t.content === "multi") releaseBlockCoin(w, t);
+    if (t.content === "coin" || t.content === "multi") popBlockCoin(w, p, t);
     else if (t.content === "vine") {
       w.vines.push({
         id: `v${w.entityId++}`,
@@ -847,6 +841,8 @@ function tickEnemies(w, previousFeet) {
 }
 export function stepWorld(w, inputs = new Map()) {
   w.tick++;
+  if (w.coinPops.length)
+    w.coinPops = w.coinPops.filter((pop) => w.tick - pop.tick < COIN_POP_TICKS);
   for (const e of w.enemies)
     if (e.dead && e.deathKind === "flip") {
       e.vy += GRAVITY * DT;
@@ -1061,18 +1057,13 @@ export function stepWorld(w, inputs = new Map()) {
         !overlap(p, item)
       )
         continue;
-      if (item.type === "coin") {
-        if (w.tick < item.collectAt) continue;
-        coin(w, p, item.x + item.w / 2, item.y + item.h / 2);
-      } else {
-        if (item.type === "oneup") life(w, p);
-        else if (item.type === "star") p.starUntil = w.tick + 560;
-        else
-          setPlayerForm(w, p, item.type === "flower" ? 2 : Math.max(1, p.form));
-        p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
-        if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
-        emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);
-      }
+      if (item.type === "oneup") life(w, p);
+      else if (item.type === "star") p.starUntil = w.tick + 560;
+      else
+        setPlayerForm(w, p, item.type === "flower" ? 2 : Math.max(1, p.form));
+      p.invincibleUntil = Math.max(p.invincibleUntil, w.tick + 45);
+      if (item.type !== "oneup") points(w, p, 1000, item.x, item.y);
+      emit(w, "powerup", item.x, item.y, p.id, 0, p.zone);
       item.used = true;
       break;
     }
@@ -1185,7 +1176,14 @@ export function snapshot(w) {
         round(e.vy),
         e.deathKind || "",
       ]),
-    items: w.items.map((i) => [i.id, round(i.x), round(i.y), i.type, i.zone]),
+    items: [
+      ...w.items.map((i) => [i.id, round(i.x), round(i.y), i.type, i.zone]),
+      ...w.coinPops.map((pop) => {
+        const age = (w.tick - pop.tick) * DT;
+        const y = pop.y + (GRAVITY / 2) * age * (age - COIN_POP_TICKS * DT);
+        return [pop.id, round(pop.x), round(y), "coin", pop.zone];
+      }),
+    ],
     bullets: w.bullets.map((b) => [b.id, round(b.x), round(b.y), b.zone]),
     flames: w.flames.map((f) => [f.id, round(f.x), round(f.y), f.zone, f.vx]),
     movers: w.movers.map((m) => [m.id, round(m.x), round(m.y), m.zone]),

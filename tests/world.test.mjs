@@ -12,7 +12,7 @@ test('all four players use one world; only the addressed player responds to inpu
   assert.equal(snapshot(world).enemies.length,world.enemies.filter(e=>!e.dead||world.tick-e.dead<25).length);
 });
 
-test('a coin block pops one shared coin and scores only when a player picks it up', () => {
+test('a coin block awards one shared coin on impact and briefly shows the pop', () => {
   const world = createWorld(3);
   world.phase = 'playing';
   world.enemies = [];
@@ -25,28 +25,51 @@ test('a coin block pops one shared coin and scores only when a player picks it u
   }
   stepWorld(world);
   assert.ok(world.used.has(block.id));
-  assert.equal(world.coins, 0);
-  assert.equal(world.score, 0);
-  const [released] = snapshot(world).items;
-  assert.equal(world.items.length, 1);
-  assert.equal(released[3], 'coin');
-  assert.ok(released[2] < block.y - 16);
-
-  for (let i = 0; i < 90; i++) stepWorld(world);
-  assert.equal(world.items[0].id, released[0]);
-  assert.equal(world.items[0].y + world.items[0].h, block.y);
-  assert.equal(world.coins, 0);
-  assert.equal(world.score, 0);
-
-  // Both players jump onto the coin from the side on the same frame.
-  for (const player of players) player.x = block.x - player.w - 6;
-  const jump = { axis: 1, jump: true, fire: false, run: false, down: false };
-  const inputs = new Map(players.map(player => [player.id, jump]));
-  for (let i = 0; i < 45; i++) stepWorld(world, inputs);
+  const impact = snapshot(world);
+  assert.equal(impact.coins, 1);
+  assert.equal(impact.score, 200);
+  assert.equal(impact.items.length, 1);
+  const [pop] = impact.items;
+  assert.equal(pop[3], 'coin');
+  assert.equal(pop[2], block.y - 16);
   assert.equal(world.items.length, 0);
+  assert.equal(world.events.filter(event => event.type === 'coin').length, 1);
+
+  for (let i = 0; i < 15; i++) stepWorld(world);
+  const [peak] = snapshot(world).items;
+  assert.equal(peak[0], pop[0]);
+  assert.ok(peak[2] < pop[2]);
+  for (const player of players) Object.assign(player, { x: peak[1], y: peak[2], vy: 0 });
+  stepWorld(world);
+  assert.equal(snapshot(world).items.length, 1);
+  assert.equal(world.coins, 1);
+  assert.equal(world.score, 200);
+
+  for (let i = 0; i < 20; i++) stepWorld(world);
+  assert.equal(snapshot(world).items.length, 0);
   assert.equal(world.coins, 1);
   assert.equal(world.score, 200);
   assert.equal(world.events.filter(event => event.type === 'coin').length, 1);
+});
+
+test('a multi-coin brick awards each eligible hit immediately and then runs out', () => {
+  const world = createWorld(1);
+  world.phase = 'playing';
+  world.enemies = [];
+  const block = world.level.platforms.find(tile => tile.content === 'multi');
+  const player = addPlayer(world, 'p0', 0);
+  for (let hit = 1; hit <= 10; hit++) {
+    Object.assign(player, { x: block.x, y: block.y + block.h, vy: -100 });
+    stepWorld(world);
+    assert.equal(world.coins, hit);
+    assert.equal(world.score, hit * 200);
+    for (let tick = 0; tick < 7; tick++) stepWorld(world);
+  }
+  assert.ok(world.used.has(block.id));
+  Object.assign(player, { x: block.x, y: block.y + block.h, vy: -100 });
+  stepWorld(world);
+  assert.equal(world.coins, 10);
+  assert.equal(world.score, 2000);
 });
 
 test('falling costs a life and respawns a player without resetting teammates', () => {

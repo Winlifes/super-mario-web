@@ -48,13 +48,17 @@ function updateTimer() {
     }, 500);
 }
 
-function addToScore(num, originObject) {
-    
-    for (i = 1; i <= num; i++) {
-        setTimeout(() => {
-            score++;
-            updateScore.call(this);
-        }, i);
+function addToScore(num, originObject, { immediate = false } = {}) {
+    if (immediate) {
+        score += num;
+        updateScore.call(this);
+    } else {
+        for (let i = 1; i <= num; i++) {
+            setTimeout(() => {
+                score++;
+                updateScore.call(this);
+            }, i);
+        }
     }
     
     if (!originObject) return;

@@ -31,8 +31,10 @@ function revealHiddenBlock(player, block) {
 
     let random = Phaser.Math.Between(0, 100);
     if (random < 90) {
+        this.coinSound.play();
+        addToScore.call(this, 200, block, { immediate: true });
         const bounds = block.getBounds();
-        const coin = this.releasedCoins.create(bounds.centerX, bounds.top, 'coin')
+        const coin = this.add.sprite(bounds.centerX, bounds.top, 'coin')
             .setScale(screenHeight / 357)
             .setOrigin(0.5, 1)
             .setDepth(3)
@@ -42,7 +44,8 @@ function revealHiddenBlock(player, block) {
             y: coin.y - 1.65 * coin.displayHeight,
             duration: 220,
             ease: 'Quad.Out',
-            yoyo: true
+            yoyo: true,
+            onComplete: () => coin.destroy()
         });
 
     } else if (random >= 90 && random < 96 ) {
