@@ -85,6 +85,11 @@ test(
     );
     assert.deepEqual(first.players, matching.players);
     assert.deepEqual(first.enemies, matching.enemies);
+    const room = app.rooms.get(welcome.code),
+      actor = room.world.players.get(welcome.id),
+      startX = actor.x;
+    // Isolated transport fixture: combat must not respawn the actor during the stale-input check.
+    room.world.enemies = [];
     let sequence = 0;
     const control = setInterval(
       () =>
@@ -100,13 +105,26 @@ test(
         }),
       30,
     );
-    await delay(700);
-    clearInterval(control);
-    const room = app.rooms.get(welcome.code),
-      actor = room.world.players.get(welcome.id);
-    assert.ok(actor.x > 70 && actor.x < 160);
+    let moved;
+    try {
+      moved = await host.wait(
+        (m) => m.type === "state" && m.tick >= first.tick + 45,
+      );
+    } finally {
+      clearInterval(control);
+    }
+    assert.ok(actor.x > startX + 12);
+    assert.ok(
+      actor.x <= startX + ((room.world.tick - first.tick) / 60) * 162 + 1,
+    );
     assert.equal(room.world.score, 0);
-    await delay(1800);
+    await host.wait(
+      (m) =>
+        m.type === "state" &&
+        m.tick > moved.tick + 24 &&
+        m.players.find((p) => p[0] === welcome.id)[3] === 0,
+    );
+    assert.equal(actor.vx, 0);
     const stopped = actor.x;
     await delay(300);
     assert.ok(Math.abs(actor.x - stopped) < 1);
