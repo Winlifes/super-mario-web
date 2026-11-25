@@ -426,8 +426,15 @@ function createControls() {
 
     // Set control keys
 
+    const codes = Phaser.Input.Keyboard.KeyCodes;
+    const savedFire = localStorage.getItem('FIRE');
+    if (savedFire === null || Number(savedFire) === codes.Q) {
+      if (Number(localStorage.getItem('JUMP')) === codes.SPACE)
+        localStorage.setItem('JUMP', codes.W);
+      if (savedFire !== null) localStorage.setItem('FIRE', codes.SPACE);
+    }
     const keyNames = ['JUMP', 'DOWN', 'LEFT', 'RIGHT', 'FIRE', 'PAUSE'];
-    const defaultCodes = [Phaser.Input.Keyboard.KeyCodes.SPACE, Phaser.Input.Keyboard.KeyCodes.S, Phaser.Input.Keyboard.KeyCodes.A, Phaser.Input.Keyboard.KeyCodes.D, Phaser.Input.Keyboard.KeyCodes.Q, Phaser.Input.Keyboard.KeyCodes.ESC];
+    const defaultCodes = [codes.W, codes.S, codes.A, codes.D, codes.SPACE, codes.ESC];
     
     keyNames.forEach((keyName, i) => {
       const keyCode = localStorage.getItem(keyName) ? Number(localStorage.getItem(keyName)) : defaultCodes[i];

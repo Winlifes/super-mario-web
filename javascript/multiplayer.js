@@ -135,13 +135,12 @@
       axis: Number(right) - Number(left),
       jump:
         pressedActions.has("jump") ||
-        keyState.has("Space") ||
         keyState.has("KeyW") ||
         keyState.has("ArrowUp") ||
         controls.includes("jump"),
       fire:
         pressedActions.has("fire") ||
-        keyState.has("KeyQ") ||
+        keyState.has("Space") ||
         keyState.has("KeyF") ||
         controls.includes("fire"),
       down:
@@ -569,7 +568,6 @@
         "Space",
         "KeyW",
         "ArrowUp",
-        "KeyQ",
         "KeyF",
         "KeyS",
         "ArrowDown",
@@ -578,9 +576,9 @@
       ].includes(event.code)
     ) {
       event.preventDefault();
-      if (!event.repeat && ["Space", "KeyW", "ArrowUp"].includes(event.code))
+      if (!event.repeat && ["KeyW", "ArrowUp"].includes(event.code))
         pressedActions.add("jump");
-      if (!event.repeat && ["KeyQ", "KeyF"].includes(event.code))
+      if (!event.repeat && ["Space", "KeyF"].includes(event.code))
         pressedActions.add("fire");
       keyState.add(event.code);
     }
@@ -1700,7 +1698,7 @@
           ? "水下：反复按跳跃游泳，向右进入出口水管。"
           : scene?.sky
             ? "天空奖励区：乘平台收集金币，落下即可回到地面。"
-            : "连续闯关 · ↓ 入管，↑ / 跳跃游泳或爬藤，Shift 奔跑。";
+            : "连续闯关 · W / ↑ 跳跃，↓ 入管，空格攻击，Shift 奔跑。";
     } else if (transition) resetInput();
     else if (ending) {
       resetInput();
