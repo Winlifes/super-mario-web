@@ -907,7 +907,7 @@
           this.castleFlag = this.add
             .image(
               level.goal.doorX,
-              level.goal.groundY - 48,
+              level.goal.groundY - (level.goal.large ? 112 : 80) + 20,
               "coop-campaign-castle-flag",
             )
             .setOrigin(0.5, 1)
@@ -1026,7 +1026,10 @@
           this.castleFlag
             .setVisible(!!cinematic?.castleFlag)
             .setY(
-              this.level.goal.groundY - 48 - (cinematic?.castleFlag || 0) * 14,
+              this.level.goal.groundY -
+                (this.level.goal.large ? 112 : 80) +
+                20 -
+                (cinematic?.castleFlag || 0) * 14,
             );
         this.dialog.forEach((line, i) =>
           line.setVisible(
@@ -1408,6 +1411,8 @@
         state.phase,
       );
     $("round-message").hidden = state.phase !== "countdown" && !ending;
+    $("round-message").classList.toggle("completed", state.phase === "won");
+    if (ending) $("touch-controls").hidden = true;
     $("again-button").hidden = true;
     $("world-select-button").hidden = true;
     if (state.phase === "countdown") {

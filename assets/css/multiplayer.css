@@ -614,3 +614,26 @@ button:disabled {
 .lobby footer {
   display: none;
 }
+
+/* Keep the original rescue dialogue and characters visible after the ending. */
+.round-message.completed {
+  top: auto;
+  bottom: 16px;
+  left: 16px;
+  width: min(420px, calc(100vw - 32px));
+  transform: none;
+  padding: 16px;
+  text-align: left;
+}
+.round-message.completed h2 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+.round-message.completed p {
+  font-size: 0.8rem;
+  margin: 0 0 12px;
+}
+.round-message.completed button {
+  font-size: 0.8rem;
+  padding: 10px 12px;
+}
